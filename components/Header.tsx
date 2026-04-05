@@ -1,7 +1,14 @@
+import { signOutAction } from "@/actions/auth-actions";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Header() {
+export default async function Header() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   return (
     <header className="bg-primary-gold w-full text-white px-6 py-1 flex items-center justify-between border-2 border-secondary-gold-dark md:flex-row flex-col gap-1 text-center">
       <div className="flex-1">
@@ -16,7 +23,22 @@ export default function Header() {
         </Link>
       </div>
 
-      <div className="flex-1"></div>
+      <div className="flex-1 flex items-center justify-end gap-1">
+        {session ? (
+          <>
+            <span className="font-bold text-sm">Добре дошъл, {session.user.name}!</span>
+            <form action={signOutAction}>
+              <button type="submit" className="btn-header">
+                Излез
+              </button>
+            </form>
+          </>
+        ) : (
+          <Link href="/login" className="btn-header">
+            Впиши се
+          </Link>
+        )}
+      </div>
     </header>
   );
 }

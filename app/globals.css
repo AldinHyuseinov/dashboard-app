@@ -6,3 +6,7 @@
 
   --spacing: 1em;
 }
+
+.btn-header {
+  @apply bg-primary-gold hover:bg-secondary-gold-dark p-1 rounded-md font-bold text-sm transition-all cursor-pointer;
+}
