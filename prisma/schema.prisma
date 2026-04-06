@@ -74,3 +74,28 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+model TaskFile {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  fileName  String
+  fileType  String   
+  data      Bytes    
+  
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String     @db.Text
+  category    String   
+  isDone      Boolean    @default(false)
+  userId      String     
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  files       TaskFile[] 
+}

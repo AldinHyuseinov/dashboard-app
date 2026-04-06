@@ -1,21 +1,33 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { loginAction } from "@/actions/auth-actions";
 import SubmitButton from "@/components/SubmitButton";
 
 export default function LoginPage() {
   const [state, formAction] = useActionState(loginAction, {});
+  const searchParams = useSearchParams();
+  const notAuthorized = searchParams.get("not-authorized") === "true";
 
   return (
-    <div className="p-1 mt-2 bg-white shadow-2xl rounded-xl border border-gray-200">
+    <div className="p-1 mt-2 max-w-md mx-auto">
+      {notAuthorized && (
+        <div className="w-full mb-1 p-1.5 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-md text-center">
+          Трябва да се впишете, за да продължите.
+        </div>
+      )}
+
       {state?.errors?.form && (
         <div className="w-full p-1.5 bg-red-50 border border-red-200 text-red-600 text-sm rounded-md text-center">
           {state.errors.form}
         </div>
       )}
 
-      <form action={formAction} className="p-1 flex flex-col gap-1">
+      <form
+        action={formAction}
+        className="p-1 mt-1 flex flex-col gap-1 bg-white shadow-2xl rounded-xl border border-gray-200"
+      >
         {/* Email Field */}
         <div className="p-1">
           <label className="block text-sm font-bold text-gray-700 mb-1" htmlFor="email">
@@ -61,7 +73,7 @@ export default function LoginPage() {
             <p className="mt-1 text-xs text-red-500">{state.errors.password[0]}</p>
           )}
         </div>
-        <SubmitButton />
+        <SubmitButton pendingText={"Влизане..."} defaultText={"ВХОД"} />
       </form>
     </div>
   );

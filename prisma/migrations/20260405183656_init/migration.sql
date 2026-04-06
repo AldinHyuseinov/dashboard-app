@@ -1,0 +1,43 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- CreateTable
+CREATE TABLE [dbo].[TaskFile] (
+    [id] NVARCHAR(1000) NOT NULL,
+    [taskId] NVARCHAR(1000) NOT NULL,
+    [fileName] NVARCHAR(1000) NOT NULL,
+    [fileType] NVARCHAR(1000) NOT NULL,
+    [data] VARBINARY(max) NOT NULL,
+    [createdAt] DATETIME2 NOT NULL CONSTRAINT [TaskFile_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [TaskFile_pkey] PRIMARY KEY CLUSTERED ([id])
+);
+
+-- CreateTable
+CREATE TABLE [dbo].[Task] (
+    [id] NVARCHAR(1000) NOT NULL,
+    [title] NVARCHAR(1000) NOT NULL,
+    [description] TEXT NOT NULL,
+    [category] NVARCHAR(1000) NOT NULL,
+    [isDone] BIT NOT NULL CONSTRAINT [Task_isDone_df] DEFAULT 0,
+    [userId] NVARCHAR(1000) NOT NULL,
+    [createdAt] DATETIME2 NOT NULL CONSTRAINT [Task_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
+    [updatedAt] DATETIME2 NOT NULL,
+    CONSTRAINT [Task_pkey] PRIMARY KEY CLUSTERED ([id])
+);
+
+-- AddForeignKey
+ALTER TABLE [dbo].[TaskFile] ADD CONSTRAINT [TaskFile_taskId_fkey] FOREIGN KEY ([taskId]) REFERENCES [dbo].[Task]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH
