@@ -176,7 +176,7 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
             <SubmitButton
               pendingText={"Запазване..."}
               defaultText={"Запази"}
-              disabled={isOverLimit || capacity <= 0}
+              disabled={isOverLimit}
             />
           </div>
         </form>
@@ -208,7 +208,7 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
             <h3 className="text-xs font-bold text-primary-gold uppercase tracking-wider mb-2">
               Нови за качване
             </h3>
-            <div className="flex flex-wrap justify-center gap-1">
+            <div className="flex flex-wrap justify-center gap-1 bg-yellow-50 rounded-md p-0.5">
               {selectedFiles.map((sf, i) => (
                 <LocalFilePreview
                   key={i}

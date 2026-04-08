@@ -28,11 +28,10 @@ export default async function Tasks(props: { params: Promise<{ category: string 
     orderBy: { createdAt: "desc" },
     include: {
       files: {
-        select: {
-          id: true,
-          fileName: true,
-          fileType: true,
-        },
+        select: { id: true, fileName: true, fileType: true },
+      },
+      user: {
+        select: { name: true },
       },
     },
   });
@@ -59,7 +58,6 @@ export default async function Tasks(props: { params: Promise<{ category: string 
         <h1 className="text-3xl font-bold text-tertiary-brown text-center">{categoryLabel}</h1>
       </div>
 
-      {/* 3. Render Client Component to handle interaction */}
       <TaskBoard initialTasks={tasks} category={category} currentUserId={session.user.id} />
     </div>
   );

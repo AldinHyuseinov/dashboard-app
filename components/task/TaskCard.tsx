@@ -22,25 +22,46 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
     }
   };
 
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat("bg-BG", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(date));
+  };
+
+  const isModified = new Date(task.updatedAt).getTime() - new Date(task.createdAt).getTime() > 2000;
+
   return (
     <div
       className={`p-1 mb-2 rounded-lg border shadow-sm transition ${task.isDone ? "bg-gray-50 border-gray-200" : "bg-white border-secondary-gold-dark"}`}
     >
-      <div className="flex justify-between items-start mb-1">
+      <div className="flex flex-col justify-between items-start mb-1">
         <h3
-          className={`font-bold text-lg ${task.isDone ? "line-through text-gray-400" : "text-gray-800"}`}
+          className={`flex gap-1 font-bold text-lg ${task.isDone ? "line-through text-gray-400" : "text-gray-800"}`}
         >
           {task.title}
+
+          <input
+            type="checkbox"
+            checked={task.isDone}
+            onChange={handleToggle}
+            disabled={isPending}
+            className="w-1 accent-primary-gold cursor-pointer"
+          />
         </h3>
 
-        {/* ANY user can mark as done */}
-        <input
-          type="checkbox"
-          checked={task.isDone}
-          onChange={handleToggle}
-          disabled={isPending}
-          className="w-1 accent-primary-gold cursor-pointer"
-        />
+        <div className="mt-1 text-xs text-gray-400 flex flex-col gap-0.5">
+          <p>
+            От: <span className="font-bold text-gray-600">{task.user?.name || "Неизвестен"}</span>{" "}
+            на {formatDate(task.createdAt)}
+          </p>
+          {isModified && (
+            <p className="italic text-gray-400">Редактирана на {formatDate(task.updatedAt)}</p>
+          )}
+        </div>
       </div>
 
       <p
@@ -76,11 +97,17 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
 
       {/* ONLY OWNER can edit or delete */}
       {isOwner && (
-        <div className="flex gap-3 mt-2 p-1 border-t border-gray-100">
-          <button onClick={onEdit} className="text-xs font-bold text-primary-gold hover:underline">
+        <div className="flex justify-end gap-3 mt-2 p-1 border-t border-gray-100">
+          <button
+            onClick={onEdit}
+            className="text-xs font-bold text-primary-gold hover:underline cursor-pointer"
+          >
             ВИЖ
           </button>
-          <button onClick={handleDelete} className="text-xs font-bold text-red-500 hover:underline">
+          <button
+            onClick={handleDelete}
+            className="text-xs font-bold text-red-500 hover:underline cursor-pointer"
+          >
             ИЗТРИЙ
           </button>
         </div>

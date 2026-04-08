@@ -13,14 +13,14 @@ export const ExistingFilePreview = ({
   const fileUrl = `/api/files/${file.id}`;
 
   return (
-    <div className="relative border border-gray-200 rounded-md overflow-hidden bg-gray-50 group">
+    <div className="relative group">
       <button
         type="button"
         onClick={(e) => {
           e.preventDefault();
           onRemove(file.id);
         }}
-        className="absolute top-1 left-1 text-red-500 cursor-pointer z-20 leading-none w-1"
+        className="absolute top-0 left-0 -translate-x-1 -translate-y-1 z-20 w-2 h-2 cursor-pointer text-xs font-bold text-red-500 p-1"
         title="Премахни"
       >
         ✕
@@ -56,14 +56,14 @@ export const LocalFilePreview = ({
   const isImage = file.type.startsWith("image/");
 
   return (
-    <div className="relative bg-yellow-50 group">
+    <div className="relative group">
       <button
         type="button"
         onClick={(e) => {
           e.preventDefault();
           onRemove();
         }}
-        className="absolute top-1 left-1 text-red-500 cursor-pointer z-20 leading-none w-1"
+        className="absolute top-0 left-0 -translate-x-1 -translate-y-1 z-20 w-2 h-2 cursor-pointer text-xs font-bold text-red-500 p-1"
         title="Откажи"
       >
         ✕

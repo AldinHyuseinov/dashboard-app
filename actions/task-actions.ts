@@ -121,7 +121,9 @@ export async function submitTaskAction(
         title: validatedFields.data.title,
         description: validatedFields.data.description,
         category: validatedFields.data.category,
-        userId: user.id,
+        user: {
+          connect: { id: user.id },
+        },
       };
 
       if (processedFiles.length > 0) {

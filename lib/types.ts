@@ -27,6 +27,8 @@ export type Task = {
   description: string;
   isDone: boolean;
   userId: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type TaskFileMeta = {
@@ -35,9 +37,9 @@ export type TaskFileMeta = {
   fileType: string;
 };
 
-// Extend the Prisma Task type to include our file metadata
 export type TaskWithFiles = Task & {
   files: TaskFileMeta[];
+  user: { name: string };
 };
 
 export type TaskCardProps = {
