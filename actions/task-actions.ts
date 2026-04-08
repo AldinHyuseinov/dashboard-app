@@ -27,13 +27,15 @@ export async function submitTaskAction(
   const description = formData.get("description") as string;
   const category = formData.get("category") as string;
 
+  const inputs = { title, description };
+
   const validatedFields = taskSchema.safeParse({ title, description, category });
 
   if (!validatedFields.success) {
     const errors = z.flattenError(validatedFields.error).fieldErrors as TaskFormState["errors"];
     console.log("Task validation errors:", errors);
 
-    return { errors: errors };
+    return { errors: errors, inputs };
   }
 
   const rawFiles = formData.getAll("files") as File[];
@@ -44,12 +46,13 @@ export async function submitTaskAction(
 
     // If there are file validation errors, return them immediately
     if (fileResult.errors) {
-      return { errors: fileResult.errors };
+      return { errors: fileResult.errors, inputs };
     }
   }
 
   const processedFiles = fileResult?.processedFiles || [];
   const taskId = formData.get("taskId") as string | null;
+  const deletedFileIds = formData.getAll("deletedFileIds") as string[];
 
   let currentFileCount = 0;
 
@@ -57,6 +60,8 @@ export async function submitTaskAction(
     currentFileCount = await prisma.taskFile.count({
       where: { taskId: taskId },
     });
+
+    currentFileCount = currentFileCount - deletedFileIds.length;
   }
 
   const remainingSlots = MAX_FILES - currentFileCount;
@@ -71,6 +76,7 @@ export async function submitTaskAction(
             : `Можете да прикачите максимум ${MAX_FILES} файла.`,
         ],
       },
+      inputs,
     };
   }
 
@@ -84,6 +90,15 @@ export async function submitTaskAction(
 
       if (!existingTask || existingTask.userId !== user.id) {
         return { errors: { form: "Неупълномощен достъп." } };
+      }
+
+      if (deletedFileIds.length > 0) {
+        await prisma.taskFile.deleteMany({
+          where: {
+            taskId: taskId,
+            id: { in: deletedFileIds },
+          },
+        });
       }
 
       const updateData: Prisma.TaskUpdateInput = {
@@ -121,7 +136,7 @@ export async function submitTaskAction(
     }
   } catch (error) {
     console.error("Database save error:", error);
-    return { errors: { form: "Възникна грешка при запазване." } };
+    return { errors: { form: "Възникна грешка при запазване." }, inputs };
   }
 
   revalidatePath(`/${category}`);

@@ -47,7 +47,7 @@ export type TaskCardProps = {
   onEdit: () => void;
 };
 
-export type TaskModalProps = {
+export type TaskFormProps = {
   onClose: () => void;
   category: string;
   existingTask?: {
@@ -85,10 +85,26 @@ export type TaskFormState = {
     files?: string[];
     form?: string;
   };
+
+  inputs?: {
+    title: string;
+    description: string;
+  };
   success?: boolean;
 };
 
 export type ProcessFilesResult = {
   errors?: { files: string[] };
   processedFiles?: Prisma.TaskFileCreateWithoutTaskInput[];
+};
+
+export type FileMeta = {
+  id: string;
+  fileName: string;
+  fileType: string;
+};
+
+export type SelectedFile = {
+  file: File;
+  previewUrl: string | null;
 };

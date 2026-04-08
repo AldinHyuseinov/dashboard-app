@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import TaskModal from "./TaskModal";
 import TaskCard from "./TaskCard";
 import { TaskWithFiles } from "@/lib/types";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function TaskBoard({
   initialTasks,
@@ -14,24 +14,19 @@ export default function TaskBoard({
   category: string;
   currentUserId: string;
 }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState<TaskWithFiles | undefined>(undefined);
-
-  const openNewModal = () => {
-    setTaskToEdit(undefined);
-    setIsModalOpen(true);
-  };
+  const router = useRouter();
 
   return (
     <>
-      <button
-        onClick={openNewModal}
-        className="bg-primary-gold text-white px-6 py-2 mb-2 mx-auto rounded-md font-bold shadow hover:bg-secondary-gold-dark transition cursor-pointer"
+      {/* Changed to a Link for creating a new task */}
+      <Link
+        href={`/category/${category}/create`}
+        className="bg-primary-gold text-white text-center px-6 py-2 mb-2 mx-auto rounded-md font-bold shadow hover:bg-secondary-gold-dark transition cursor-pointer block w-max"
       >
         + Нова Задача
-      </button>
+      </Link>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 lg:grid-cols-3 items-start">
         {initialTasks.map((task) => (
           <TaskCard
             key={task.id}
@@ -39,8 +34,8 @@ export default function TaskBoard({
             category={category}
             currentUserId={currentUserId}
             onEdit={() => {
-              setTaskToEdit(task);
-              setIsModalOpen(true);
+              // Navigate to the edit page for this specific task
+              router.push(`/category/${category}/${task.id}/edit`);
             }}
           />
         ))}
@@ -48,14 +43,6 @@ export default function TaskBoard({
           <p className="text-gray-500 col-span-full">Няма намерени задачи.</p>
         )}
       </div>
-
-      {isModalOpen && (
-        <TaskModal
-          onClose={() => setIsModalOpen(false)}
-          category={category}
-          existingTask={taskToEdit}
-        />
-      )}
     </>
   );
 }

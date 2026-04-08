@@ -50,7 +50,7 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
       </p>
 
       {task.files && task.files.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
+        <div className="flex flex-wrap justify-center gap-2 mb-2">
           {task.files.map((file) => {
             const isImage = file.fileType.startsWith("image/");
             return (
@@ -78,7 +78,7 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
       {isOwner && (
         <div className="flex gap-3 mt-2 p-1 border-t border-gray-100">
           <button onClick={onEdit} className="text-xs font-bold text-primary-gold hover:underline">
-            РЕДАКТИРАЙ
+            ВИЖ
           </button>
           <button onClick={handleDelete} className="text-xs font-bold text-red-500 hover:underline">
             ИЗТРИЙ
