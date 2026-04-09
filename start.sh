@@ -6,11 +6,13 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
+echo -z "$DATABASE_URL"
+
 echo "Waiting for SQL Server to be ready..."
 sleep 15 
 
-echo "Push to db..."
-npx prisma db push --accept-data-loss
+echo "Running migrations..."
+npx npx prisma migrate deploy --config ./prisma.config.ts
 
 echo "Starting Next.js..."
 node server.js
