@@ -56,7 +56,7 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
       </div>
 
       <p
-        className={`text-sm mb-4 whitespace-pre-wrap ${task.isDone ? "text-gray-400" : "text-gray-600"}`}
+        className={`text-sm mb-2 whitespace-pre-wrap ${task.isDone ? "text-gray-400" : "text-gray-600"}`}
       >
         {task.description}
       </p>
