@@ -59,6 +59,8 @@ RUN adduser --system --uid 1001 nextjs
 # Copy the public directory
 COPY --from=builder /app/public ./public
 
+RUN npm install prisma @prisma/config @prisma/client
+
 COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/generated ./generated
