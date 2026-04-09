@@ -2,6 +2,7 @@
 
 import { deleteTask, toggleTaskStatus } from "@/actions/task-actions";
 import { TaskCardProps } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
 import { useTransition } from "react";
 
 export default function TaskCard({ task, category, currentUserId, onEdit }: TaskCardProps) {
@@ -22,21 +23,11 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("bg-BG", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(date));
-  };
-
   const isModified = new Date(task.updatedAt).getTime() - new Date(task.createdAt).getTime() > 2000;
 
   return (
     <div
-      className={`p-1 mb-2 rounded-lg border shadow-sm transition ${task.isDone ? "bg-gray-50 border-gray-200" : "bg-white border-secondary-gold-dark"}`}
+      className={`p-1 mb-2 rounded-lg border shadow-sm transition ${task.isDone ? "bg-gray-50 border-gray-200" : "bg-yellow-50/20 border-secondary-gold-dark"}`}
     >
       <div className="flex flex-col justify-between items-start mb-1">
         <h3

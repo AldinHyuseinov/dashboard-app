@@ -76,7 +76,7 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
   };
 
   return (
-    <div className="flex flex-wrap items-start justify-center w-full p-4 gap-1 pt-10">
+    <div className="flex flex-wrap items-start justify-center w-full p-4 gap-1 pt-2">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-30 p-2">
         <h2 className="text-xl font-bold mb-1 text-tertiary-brown">
           {existingTask ? "Редактиране" : "Създаване на задача"}
@@ -129,9 +129,11 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-sm font-bold text-gray-700">Прикачени файлове</label>
+              <label htmlFor="files" className="text-sm font-bold text-gray-700">
+                Прикачени файлове
+              </label>
               <span
-                className={`text-[10px] font-bold ${isOverLimit ? "text-red-500" : "text-gray-400"}`}
+                className={`text-sm font-bold ${isOverLimit ? "text-red-500" : "text-gray-400"}`}
               >
                 {existingFileCount + selectedFiles.length} / {MAX_FILES}
               </span>
