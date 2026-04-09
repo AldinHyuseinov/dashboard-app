@@ -10,5 +10,14 @@ services:
     volumes:
       - sqlserver_data:/var/opt/mssql
 
+  app:
+    image: aldin00/dashboard:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    depends_on:
+      - sqlserver
+
 volumes:
   sqlserver_data:
