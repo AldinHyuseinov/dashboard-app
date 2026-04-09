@@ -35,6 +35,9 @@ WORKDIR /app
 
 # Copy deps and prisma client
 COPY --from=deps /app/node_modules ./node_modules
+
+COPY --from=deps /app/generated ./generated
+
 COPY . .
 
 # Build Next.js
@@ -57,6 +60,7 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/generated ./generated
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
