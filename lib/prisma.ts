@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { PrismaMssql } from "@prisma/adapter-mssql";
 import { PrismaClient } from "../generated/prisma/client";
 
@@ -17,7 +16,7 @@ const sqlConfig = {
     trustServerCertificate: true, // change to true for local dev / self-signed certs
   },
 };
-
+console.log(sqlConfig.database);
 const adapter = new PrismaMssql(sqlConfig);
 const prisma = new PrismaClient({ adapter });
 
