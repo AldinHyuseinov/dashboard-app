@@ -104,7 +104,7 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
               id="title"
               name="title"
               defaultValue={state.inputs?.title ?? existingTask?.title ?? ""}
-              className={`w-full border rounded-md p-1 outline-none transition-colors ${state.errors?.title ? "border-red-500" : "focus:ring-primary-gold focus:border-primary-gold"}`}
+              className={`w-full border border-gray-300 rounded-md p-1 outline-none transition-colors ${state.errors?.title ? "border-red-500" : "focus:ring-primary-gold focus:border-primary-gold"}`}
             />
             {state.errors?.title && (
               <p className="text-xs text-red-500 mt-1">{state.errors.title[0]}</p>
@@ -120,7 +120,7 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
               name="description"
               rows={4}
               defaultValue={state.inputs?.description ?? existingTask?.description ?? ""}
-              className={`w-full border rounded-md p-1 outline-none transition-colors ${state.errors?.description ? "border-red-500" : "focus:ring-primary-gold focus:border-primary-gold"}`}
+              className={`w-full border border-gray-300 rounded-md p-1 outline-none transition-colors ${state.errors?.description ? "border-red-500" : "focus:ring-primary-gold focus:border-primary-gold"}`}
             />
             {state.errors?.description && (
               <p className="text-xs text-red-500 mt-1">{state.errors.description[0]}</p>

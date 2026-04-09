@@ -6,6 +6,85 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Паролата е задължителна."),
 });
 
+export const profileUpdateSchema = z
+  .object({
+    name: z
+      .string("Името е задължително")
+      .min(2, "Името трябва да бъде поне 2 символа")
+      .max(30, "Името трябва да бъде по-малко от 30 символа"),
+    email: z.email("Невалиден имейл адрес"),
+    oldPassword: z.string().optional().or(z.literal("")),
+    newPassword: z.string().optional().or(z.literal("")),
+    confirmPassword: z.string().optional().or(z.literal("")),
+  })
+  .superRefine((data, ctx) => {
+    // Only run password validations if the user is trying to change it
+    if (data.newPassword) {
+      if (!data.oldPassword) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Въведете старата си парола",
+          path: ["oldPassword"],
+        });
+      }
+      if (data.newPassword.length < 8) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Паролата трябва да бъде поне 8 символа",
+          path: ["newPassword"],
+        });
+      }
+      if (data.newPassword.length > 20) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Паролата трябва да бъде по-малко от 20 символа",
+          path: ["newPassword"],
+        });
+      }
+      if (!/[A-Z]/.test(data.newPassword)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Трябва да съдържа поне една главна буква",
+          path: ["newPassword"],
+        });
+      }
+      if (!/[a-z]/.test(data.newPassword)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Трябва да съдържа поне една малка буква",
+          path: ["newPassword"],
+        });
+      }
+      if (!/[0-9]/.test(data.newPassword)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Трябва да съдържа поне едно число",
+          path: ["newPassword"],
+        });
+      }
+      if (!/[!@#$%^&*]/.test(data.newPassword)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Трябва да съдържа специален символ (!@#$%^&*)",
+          path: ["newPassword"],
+        });
+      }
+      if (data.newPassword !== data.confirmPassword) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Паролите не съвпадат",
+          path: ["confirmPassword"],
+        });
+      }
+    } else if (data.oldPassword) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Въведете нова парола",
+        path: ["newPassword"],
+      });
+    }
+  });
+
 export const taskSchema = z.object({
   title: z.string().min(1, "Заглавието е задължително."),
   description: z.string().min(1, "Описанието е задължително."),
@@ -91,6 +170,18 @@ export type TaskFormState = {
   inputs?: {
     title: string;
     description: string;
+  };
+  success?: boolean;
+};
+
+export type ProfileFormState = {
+  errors?: {
+    name?: string[];
+    email?: string[];
+    oldPassword?: string[];
+    newPassword?: string[];
+    confirmPassword?: string[];
+    form?: string;
   };
   success?: boolean;
 };

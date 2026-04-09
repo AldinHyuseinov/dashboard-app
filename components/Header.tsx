@@ -16,7 +16,6 @@ export default async function Header() {
           Комуникационна платформа
         </Link>
       </div>
-
       <div className="flex-1 flex justify-center items-center gap-2">
         <Link href="/">
           <Image src="/company-logo.png" alt="Logo" width={300} height={70} />
@@ -26,7 +25,9 @@ export default async function Header() {
       <div className="flex-1 flex items-center justify-end gap-1">
         {session ? (
           <>
-            <span className="font-bold text-sm">Добре дошъл, {session.user.name}!</span>
+            <Link href="/profile">
+              <span className="font-bold text-sm">Здравей, {session.user.name}!</span>
+            </Link>
             <form action={signOutAction}>
               <button type="submit" className="btn-header">
                 Излез
