@@ -16,7 +16,7 @@ const sqlConfig = {
     trustServerCertificate: true, // change to true for local dev / self-signed certs
   },
 };
-console.log(sqlConfig.database);
+
 const adapter = new PrismaMssql(sqlConfig);
 const prisma = new PrismaClient({ adapter });
 
