@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ProfileFormState, profileUpdateSchema } from "@/lib/types";
 import { isAPIError } from "better-auth/api";
+import { redirect } from "next/navigation";
 
 export async function updateProfileAction(
   prevState: ProfileFormState,
@@ -53,6 +54,7 @@ export async function updateProfileAction(
         headers: await headers(),
         body: {
           newEmail: email,
+          callbackURL: "/?verified=true",
         },
       });
     }
@@ -72,11 +74,16 @@ export async function updateProfileAction(
       if (error.message === "Invalid password") {
         return { errors: { oldPassword: ["Грешна стара парола."] } };
       }
-      // todo: else Verification email isn't enabled
     }
+    console.log(error);
     return { errors: { form: "Възникна грешка при запазване на профила." } };
   }
-  revalidatePath("/");
+
+  if (!sameEmail) {
+    redirect("/?verify-email=true");
+  } else {
+    revalidatePath("/");
+  }
 
   return { success: true };
 }
