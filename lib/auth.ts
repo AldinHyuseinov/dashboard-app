@@ -12,6 +12,13 @@ export const auth = betterAuth({
     provider: "sqlserver",
   }),
 
+  user: {
+    changeEmail: {
+      enabled: true,
+      updateEmailWithoutVerification: true, // change when email verification is implemented
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
   },

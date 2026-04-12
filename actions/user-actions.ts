@@ -1,11 +1,11 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ProfileFormState, profileUpdateSchema } from "@/lib/types";
+import { isAPIError } from "better-auth/api";
 
 export async function updateProfileAction(
   prevState: ProfileFormState,
@@ -20,9 +20,12 @@ export async function updateProfileAction(
   const newPassword = formData.get("newPassword") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
+  const sameName = name === session.user.name;
+  const sameEmail = email === session.user.email;
+
   const validatedFields = profileUpdateSchema.safeParse({
-    name,
-    email,
+    name: sameName ? undefined : name,
+    email: sameEmail ? undefined : email,
     oldPassword,
     newPassword,
     confirmPassword,
@@ -36,10 +39,23 @@ export async function updateProfileAction(
   }
 
   try {
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { name, email },
-    });
+    if (!sameName) {
+      await auth.api.updateUser({
+        headers: await headers(),
+        body: {
+          name,
+        },
+      });
+    }
+
+    if (!sameEmail) {
+      await auth.api.changeEmail({
+        headers: await headers(),
+        body: {
+          newEmail: email,
+        },
+      });
+    }
 
     if (newPassword && oldPassword) {
       await auth.api.changePassword({
@@ -51,11 +67,12 @@ export async function updateProfileAction(
         },
       });
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    // Better Auth throws a specific error if the old password doesn't match
-    if (error?.message?.toLowerCase().includes("password") || error?.status === 400) {
-      return { errors: { oldPassword: ["Грешна стара парола."] } };
+  } catch (error) {
+    if (isAPIError(error)) {
+      if (error.message === "Invalid password") {
+        return { errors: { oldPassword: ["Грешна стара парола."] } };
+      }
+      // todo: else Verification email isn't enabled
     }
     return { errors: { form: "Възникна грешка при запазване на профила." } };
   }

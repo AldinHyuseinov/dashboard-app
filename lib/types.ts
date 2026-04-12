@@ -11,8 +11,9 @@ export const profileUpdateSchema = z
     name: z
       .string("Името е задължително")
       .min(2, "Името трябва да бъде поне 2 символа")
-      .max(30, "Името трябва да бъде по-малко от 30 символа"),
-    email: z.email("Невалиден имейл адрес"),
+      .max(30, "Името трябва да бъде по-малко от 30 символа")
+      .optional(),
+    email: z.email("Невалиден имейл адрес").optional(),
     oldPassword: z.string().optional().or(z.literal("")),
     newPassword: z.string().optional().or(z.literal("")),
     confirmPassword: z.string().optional().or(z.literal("")),
