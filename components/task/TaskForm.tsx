@@ -2,19 +2,22 @@
 
 import { submitTaskAction } from "@/actions/task-actions";
 import { SelectedFile, TaskFormProps } from "@/lib/types";
-import { useEffect, useState, useActionState, useRef } from "react";
+import { useEffect, useState, useActionState, useRef, startTransition } from "react";
 import SubmitButton from "../SubmitButton";
 import { MAX_FILES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { ExistingFilePreview, LocalFilePreview } from "./FilePreview";
 
-// Renamed from TaskModal to TaskForm since it's a page now
 export default function TaskForm({ category, existingTask }: Omit<TaskFormProps, "onClose">) {
-  const router = useRouter(); // Initialize the router
+  const router = useRouter();
   const [state, formAction] = useActionState(submitTaskAction, {});
 
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [deletedFileIds, setDeletedFileIds] = useState<string[]>([]);
+
+  // States for handling the upload phase
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -25,7 +28,6 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
   const capacity = MAX_FILES - existingFileCount;
   const isOverLimit = selectedFiles.length > capacity;
 
-  // Navigate back to the category page on success
   useEffect(() => {
     if (state.success) {
       router.push(`/category/${category}`);
@@ -33,19 +35,32 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
   }, [state.success, category, router]);
 
   useEffect(() => {
-    if (state.errors && fileInputRef.current && selectedFiles.length > 0) {
+    // Sync the input every time the user adds or removes a file from the list
+    syncNativeInput(selectedFiles);
+  }, [selectedFiles]); // Trigger on every change to the list
+
+  // Helper function to sync the React state with the native HTML input
+  const syncNativeInput = (currentFiles: SelectedFile[]) => {
+    if (fileInputRef.current) {
       const dataTransfer = new DataTransfer();
-      selectedFiles.forEach((sf) => dataTransfer.items.add(sf.file));
+      currentFiles.forEach((sf) => {
+        dataTransfer.items.add(sf.file);
+      });
+      // This line is what updates the "X files selected" text in the browser
       fileInputRef.current.files = dataTransfer.files;
     }
-  }, [state.errors, selectedFiles]);
+  };
+
+  // Clean up Blob URLs to prevent memory leaks
+  const cleanupPreviews = (files: SelectedFile[]) => {
+    files.forEach((sf) => {
+      if (sf.previewUrl) URL.revokeObjectURL(sf.previewUrl);
+    });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-
-    selectedFiles.forEach((sf) => {
-      if (sf.previewUrl) URL.revokeObjectURL(sf.previewUrl);
-    });
+    cleanupPreviews(selectedFiles);
 
     const newSelectedFiles = files.map((file) => ({
       file,
@@ -61,19 +76,73 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
 
   const handleRemoveNewFile = (indexToRemove: number) => {
     const removedFile = selectedFiles[indexToRemove];
-    if (removedFile.previewUrl) {
-      URL.revokeObjectURL(removedFile.previewUrl);
-    }
+    if (removedFile.previewUrl) URL.revokeObjectURL(removedFile.previewUrl);
 
     const updatedFiles = selectedFiles.filter((_, index) => index !== indexToRemove);
     setSelectedFiles(updatedFiles);
-
-    if (fileInputRef.current) {
-      const dataTransfer = new DataTransfer();
-      updatedFiles.forEach((sf) => dataTransfer.items.add(sf.file));
-      fileInputRef.current.files = dataTransfer.files;
-    }
   };
+
+  // --- Orchestration Logic ---
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (isOverLimit || isUploading) return;
+
+    const formData = new FormData(e.currentTarget);
+
+    // 1. Remove raw files from FormData to avoid Server Action limits
+    formData.delete("files");
+
+    // 2. Upload pending files to API one-by-one
+    const updatedSelectedFiles = [...selectedFiles];
+    setIsUploading(true);
+
+    try {
+      for (let i = 0; i < updatedSelectedFiles.length; i++) {
+        const item = updatedSelectedFiles[i];
+
+        // Skip if already uploaded (useful if form failed validation once)
+        if (item.serverId) {
+          formData.append("processedFileIds", item.serverId);
+          continue;
+        }
+
+        setUploadProgress(`Обработка на файл ${i + 1} от ${updatedSelectedFiles.length}...`);
+
+        const uploadData = new FormData();
+        uploadData.append("file", item.file);
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadData,
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Възникна грешка при качването.");
+        }
+
+        const { id } = await res.json();
+
+        // Save the ID so we don't re-upload on next attempt
+        updatedSelectedFiles[i].serverId = id;
+        formData.append("processedFileIds", id);
+      }
+
+      setSelectedFiles(updatedSelectedFiles);
+      setUploadProgress("");
+      setIsUploading(false);
+
+      // 3. Trigger the Server Action with text and IDs only
+      startTransition(() => {
+        formAction(formData);
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.log(error);
+      setIsUploading(false);
+      setUploadProgress(error.message);
+    }
+  }
 
   return (
     <div className="flex flex-wrap items-start justify-center w-full p-4 gap-1 pt-2">
@@ -83,12 +152,12 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
         </h2>
 
         {state.errors?.form && (
-          <div className="mb-4 p-2 bg-red-100 text-red-600 rounded-md text-sm">
+          <div className="mb-4 p-2 bg-red-100 text-red-600 rounded-md text-sm font-medium">
             {state.errors.form}
           </div>
         )}
 
-        <form action={formAction} className="flex flex-col gap-1">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-1">
           <input type="hidden" name="category" value={category} />
           {existingTask && <input type="hidden" name="taskId" value={existingTask.id} />}
 
@@ -162,6 +231,13 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
               </p>
             )}
 
+            {/* Display processing status */}
+            {uploadProgress && (
+              <p className="text-xs text-primary-gold font-bold animate-pulse mb-2 italic">
+                {uploadProgress}
+              </p>
+            )}
+
             {state.errors?.files && (
               <p className="text-xs text-red-500 mt-1">{state.errors.files[0]}</p>
             )}
@@ -170,21 +246,20 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
           <div className="flex gap-2 justify-end">
             <button
               type="button"
-              onClick={() => router.push(`/category/${category}`)} // Navigate back to list instead of onClose
+              onClick={() => router.push(`/category/${category}`)}
               className="px-1 rounded-md text-gray-600 text-sm hover:bg-gray-100 cursor-pointer font-medium"
             >
               Отказ
             </button>
             <SubmitButton
-              pendingText={"Запазване..."}
+              pendingText={isUploading ? "Обработка..." : "Запазване..."}
               defaultText={"Запази"}
-              disabled={isOverLimit}
+              disabled={isOverLimit || isUploading}
             />
           </div>
         </form>
       </div>
 
-      {/* RIGHT SIDE: Visual Preview Panel */}
       <div
         className={`${visibleExistingFiles.length > 0 || selectedFiles.length > 0 ? "flex flex-col gap-2" : "hidden"} w-full max-w-30`}
       >

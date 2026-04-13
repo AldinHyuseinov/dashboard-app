@@ -201,7 +201,8 @@ export type FileMeta = {
 
 export type SelectedFile = {
   file: File;
-  previewUrl: string | null;
+  previewUrl: string;
+  serverId?: string;
 };
 
 export type AlertBannerProps = {

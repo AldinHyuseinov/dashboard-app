@@ -4,11 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { ProcessFilesResult, TaskFormState, taskSchema } from "@/lib/types";
+import { TaskFormState, taskSchema } from "@/lib/types";
 import { Prisma } from "@/generated/prisma/client";
 import z from "zod";
-import { processAndCompressFiles } from "./action-helpers";
-import { MAX_FILE_SIZE, MAX_FILES } from "@/lib/constants";
+import { MAX_FILES } from "@/lib/constants";
 import { redirect } from "next/navigation";
 
 async function getUser() {
@@ -20,60 +19,48 @@ export async function submitTaskAction(
   prevState: TaskFormState,
   formData: FormData,
 ): Promise<TaskFormState> {
-  const user = await getUser();
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = session?.user;
   if (!user) throw new Error("Unauthorized");
 
-  // Extract text fields
+  // 1. Extract fields
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
   const category = formData.get("category") as string;
+  const taskId = formData.get("taskId") as string | null;
+
+  // 2. Extract IDs of files pre-processed by the API route
+  // These were appended to formData by the client-side loop
+  const processedFileIds = formData.getAll("processedFileIds") as string[];
+  const deletedFileIds = formData.getAll("deletedFileIds") as string[];
 
   const inputs = { title, description };
 
+  // 3. Text Validation
   const validatedFields = taskSchema.safeParse({ title, description, category });
-
   if (!validatedFields.success) {
     const errors = z.flattenError(validatedFields.error).fieldErrors as TaskFormState["errors"];
-    console.log("Task validation errors:", errors);
-
-    return { errors: errors, inputs };
+    return { errors, inputs };
   }
 
-  const rawFiles = formData.getAll("files") as File[];
-  let fileResult: ProcessFilesResult = { errors: undefined, processedFiles: undefined };
-
-  if (rawFiles.length > 0) {
-    fileResult = await processAndCompressFiles(rawFiles, MAX_FILE_SIZE, MAX_FILES);
-
-    // If there are file validation errors, return them immediately
-    if (fileResult.errors) {
-      return { errors: fileResult.errors, inputs };
-    }
-  }
-
-  const processedFiles = fileResult?.processedFiles || [];
-  const taskId = formData.get("taskId") as string | null;
-  const deletedFileIds = formData.getAll("deletedFileIds") as string[];
-
-  let currentFileCount = 0;
-
+  // 4. Capacity and Limit Logic
+  let currentDbCount = 0;
   if (taskId) {
-    currentFileCount = await prisma.taskFile.count({
+    currentDbCount = await prisma.taskFile.count({
       where: { taskId: taskId },
     });
-
-    currentFileCount = currentFileCount - deletedFileIds.length;
   }
 
-  const remainingSlots = MAX_FILES - currentFileCount;
+  // Final count = (Existing in DB - To be deleted) + Newly uploaded via API
+  const totalCountAfterAction = currentDbCount - deletedFileIds.length + processedFileIds.length;
 
-  // Enforce the total limit securely on the server
-  if (processedFiles.length > remainingSlots) {
+  if (totalCountAfterAction > MAX_FILES) {
+    const remainingSlots = MAX_FILES - (currentDbCount - deletedFileIds.length);
     return {
       errors: {
         files: [
-          currentFileCount > 0
-            ? `Тази задача вече има ${currentFileCount} файла. Можете да добавите максимум още ${remainingSlots}.`
+          currentDbCount > 0
+            ? `Тази задача вече има ${currentDbCount - deletedFileIds.length} запазени файла. Можете да добавите максимум още ${remainingSlots}.`
             : `Можете да прикачите максимум ${MAX_FILES} файла.`,
         ],
       },
@@ -81,57 +68,49 @@ export async function submitTaskAction(
     };
   }
 
-  // Save to Database
+  const isUpdate = Boolean(taskId);
+
+  // 5. Database Save Logic
   try {
-    if (taskId) {
+    if (isUpdate && taskId) {
+      // --- UPDATE LOGIC ---
       const existingTask = await prisma.task.findUnique({
         where: { id: taskId },
         select: { userId: true },
       });
 
       if (!existingTask || existingTask.userId !== user.id) {
-        return { errors: { form: "Неупълномощен достъп." } };
+        return { errors: { form: "Неупълномощен достъп." }, inputs };
       }
 
-      if (deletedFileIds.length > 0) {
-        await prisma.taskFile.deleteMany({
-          where: {
-            taskId: taskId,
-            id: { in: deletedFileIds },
-          },
-        });
-      }
-
+      // Build update data
       const updateData: Prisma.TaskUpdateInput = {
         title: validatedFields.data.title,
         description: validatedFields.data.description,
+        files: {
+          // Remove old ones
+          deleteMany: deletedFileIds.length > 0 ? { id: { in: deletedFileIds } } : undefined,
+          // Link the newly processed orphaned files
+          connect: processedFileIds.map((id) => ({ id })),
+        },
       };
-
-      if (processedFiles.length > 0) {
-        updateData.files = {
-          create: processedFiles,
-        };
-      }
 
       await prisma.task.update({
         where: { id: taskId },
         data: updateData,
       });
     } else {
+      // --- CREATE LOGIC ---
       const createData: Prisma.TaskCreateInput = {
         title: validatedFields.data.title,
         description: validatedFields.data.description,
         category: validatedFields.data.category,
-        user: {
-          connect: { id: user.id },
+        user: { connect: { id: user.id } },
+        files: {
+          // Link the processed orphaned files
+          connect: processedFileIds.map((id) => ({ id })),
         },
       };
-
-      if (processedFiles.length > 0) {
-        createData.files = {
-          create: processedFiles,
-        };
-      }
 
       await prisma.task.create({
         data: createData,
@@ -142,25 +121,11 @@ export async function submitTaskAction(
     return { errors: { form: "Възникна грешка при запазване." }, inputs };
   }
 
-  redirect(`/category/${category}?success=true`);
-}
-
-export async function updateTask(taskId: string, formData: FormData, category: string) {
-  const user = await getUser();
-  if (!user) throw new Error("Unauthorized");
-
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (task?.userId !== user.id) throw new Error("You can only edit your own tasks");
-
-  await prisma.task.update({
-    where: { id: taskId },
-    data: {
-      title: formData.get("title") as string,
-      description: formData.get("description") as string,
-    },
-  });
-
-  redirect(`/category/${category}?updated=true`);
+  if (isUpdate) {
+    redirect(`/category/${category}?updated=true`);
+  } else {
+    redirect(`/category/${category}?success=true`);
+  }
 }
 
 export async function deleteTask(taskId: string, category: string) {
