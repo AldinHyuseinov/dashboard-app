@@ -1,4 +1,4 @@
-import VerifyEmailPopup from "@/components/VerifyEmailPopup";
+import VerifyEmailPopup from "@/components/notification/VerifyEmailPopup";
 import Image from "next/image";
 import { Suspense } from "react";
 

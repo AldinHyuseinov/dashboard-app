@@ -12,5 +12,11 @@ export default async function Profile() {
     redirect("/login?not-authorized=true");
   }
 
-  return <ProfileForm name={session.user.name} email={session.user.email} />;
+  return (
+    <ProfileForm
+      name={session.user.name}
+      email={session.user.email}
+      isVerified={session.user.emailVerified}
+    />
+  );
 }

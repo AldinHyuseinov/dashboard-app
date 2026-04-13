@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import { ReactNode } from "react";
 import z from "zod";
 
 export const loginSchema = z.object({
@@ -201,4 +202,10 @@ export type FileMeta = {
 export type SelectedFile = {
   file: File;
   previewUrl: string | null;
+};
+
+export type AlertBannerProps = {
+  type?: "warning" | "success" | "error";
+  children: ReactNode;
+  onClose?: () => void;
 };

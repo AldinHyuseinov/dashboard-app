@@ -1,13 +1,29 @@
 "use client";
 
-import { useEffect, useActionState } from "react";
+import { useEffect, useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateProfileAction } from "@/actions/user-actions";
 import SubmitButton from "@/components/SubmitButton";
+import AlertBanner from "../notification/AlertBanner";
+import { authClient } from "@/lib/auth-client";
 
-export default function ProfileForm({ name, email }: { name: string; email: string }) {
+export default function ProfileForm({
+  name,
+  email,
+  isVerified,
+}: {
+  name: string;
+  email: string;
+  isVerified: boolean;
+}) {
   const router = useRouter();
   const [state, formAction] = useActionState(updateProfileAction, {});
+
+  const [isPending, setIsPending] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   // Navigate away automatically if the server action is successful
   useEffect(() => {
@@ -15,6 +31,36 @@ export default function ProfileForm({ name, email }: { name: string; email: stri
       router.push("/"); // Redirects to home page on success
     }
   }, [state.success, router]);
+
+  const handleVerifyEmail = async () => {
+    setIsPending(true);
+    setAlertMessage(null); // Clear any previous alerts before sending
+
+    try {
+      const { error } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: "/?verified=true",
+      });
+
+      if (error) {
+        // Better Auth returns an error object if it fails
+        setAlertMessage({
+          type: "error",
+          text: error.message || "Възникна грешка при изпращането на имейла.",
+        });
+      } else {
+        setAlertMessage({
+          type: "success",
+          text: "Успешно изпратен имейл за потвърждение! Моля, проверете пощата си.",
+        });
+      }
+    } catch (err) {
+      console.log("Failed to send verification email", err);
+      setAlertMessage({ type: "error", text: "Възникна неочаквана грешка." });
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   return (
     <div className="flex justify-center items-start my-2 px-4 w-full">
@@ -26,6 +72,24 @@ export default function ProfileForm({ name, email }: { name: string; email: stri
               Направи промени на своя профил. Натисни запази, когато приключиш.
             </p>
           </div>
+
+          {alertMessage && <AlertBanner type={alertMessage.type}>{alertMessage.text}</AlertBanner>}
+
+          {!isVerified && !alertMessage && (
+            <AlertBanner type="warning">
+              <span>Имейлът ви не е потвърден! Потвърдете или сменете имейла.</span>
+
+              <button
+                onClick={handleVerifyEmail}
+                disabled={isPending}
+                className={`btn-header text-white transition-all ${
+                  isPending ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-70" : ""
+                }`}
+              >
+                {isPending ? "Изпращане..." : "Потвърди"}
+              </button>
+            </AlertBanner>
+          )}
 
           {state.errors?.form && (
             <div className="p-2 bg-red-100 text-red-600 rounded-md text-xs font-medium mb-1">
