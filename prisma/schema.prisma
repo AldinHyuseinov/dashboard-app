@@ -91,7 +91,7 @@ model TaskFile {
 model Task {
   id          String   @id @default(cuid())
   title       String
-  description String   @db.Text
+  description String   @db.NVarChar(Max)
   category    String
   isDone      Boolean  @default(false)
   userId      String
