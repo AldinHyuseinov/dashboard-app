@@ -13,6 +13,8 @@ export default async function CreateTaskPage({
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     redirect("/login?not-authorized=true");
+  } else if (session && !session.user.emailVerified) {
+    redirect(`/category/${category}?verify-email=true`);
   }
 
   return <TaskForm category={category} />;

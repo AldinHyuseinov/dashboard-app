@@ -9,6 +9,7 @@ import { Prisma } from "@/generated/prisma/client";
 import z from "zod";
 import { processAndCompressFiles } from "./action-helpers";
 import { MAX_FILE_SIZE, MAX_FILES } from "@/lib/constants";
+import { redirect } from "next/navigation";
 
 async function getUser() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -141,9 +142,7 @@ export async function submitTaskAction(
     return { errors: { form: "Възникна грешка при запазване." }, inputs };
   }
 
-  revalidatePath(`/${category}`);
-
-  return { success: true };
+  redirect(`/category/${category}?success=true`);
 }
 
 export async function updateTask(taskId: string, formData: FormData, category: string) {
@@ -161,7 +160,7 @@ export async function updateTask(taskId: string, formData: FormData, category: s
     },
   });
 
-  revalidatePath(`/${category}`);
+  redirect(`/category/${category}?updated=true`);
 }
 
 export async function deleteTask(taskId: string, category: string) {
@@ -172,7 +171,7 @@ export async function deleteTask(taskId: string, category: string) {
   if (task?.userId !== user.id) throw new Error("You can only delete your own tasks");
 
   await prisma.task.delete({ where: { id: taskId } });
-  revalidatePath(`/${category}`);
+  redirect(`/category/${category}?deleted=true`);
 }
 
 export async function toggleTaskStatus(taskId: string, isDone: boolean, category: string) {

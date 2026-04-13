@@ -55,7 +55,7 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     };
   }
 
-  redirect("/");
+  redirect("/?success-login=true");
 }
 
 export async function signOutAction() {

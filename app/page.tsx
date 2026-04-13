@@ -1,4 +1,4 @@
-import VerifyEmailPopup from "@/components/notification/VerifyEmailPopup";
+import Alert from "@/components/notification/Alert";
 import Image from "next/image";
 import { Suspense } from "react";
 
@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <main className="w-full flex flex-col items-center mt-2">
       <Suspense fallback={null}>
-        <VerifyEmailPopup />
+        <Alert />
       </Suspense>
 
       <section className="bg-gray-200">

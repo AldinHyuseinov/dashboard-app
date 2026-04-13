@@ -4,6 +4,7 @@ import TaskCard from "./TaskCard";
 import { TaskWithFiles } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Alert from "../notification/Alert";
 
 export default function TaskBoard({
   initialTasks,
@@ -25,6 +26,8 @@ export default function TaskBoard({
       >
         + Нова Задача
       </Link>
+
+      <Alert />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 lg:grid-cols-3 items-start">
         {initialTasks.map((task) => (

@@ -1,3 +1,5 @@
+"use client";
+
 import { AlertBannerProps } from "@/lib/types";
 
 export default function AlertBanner({ type = "warning", children, onClose }: AlertBannerProps) {
@@ -9,9 +11,9 @@ export default function AlertBanner({ type = "warning", children, onClose }: Ale
 
   return (
     <div
-      className={`mb-1 p-1.5 border text-sm md:text-base rounded-md shadow-sm flex items-center justify-between gap-2 ${colorStyles[type]}`}
+      className={`mb-1 p-1.5 border text-sm md:text-base rounded-md shadow-sm flex items-center justify-between gap-1 ${colorStyles[type]}`}
     >
-      <div className="flex-1 flex items-center justify-center gap-2 text-center">{children}</div>
+      <div className="flex flex-1 items-center justify-center gap-2 text-center">{children}</div>
 
       {/* Conditionally render the close button if onClose is provided */}
       {onClose && (
