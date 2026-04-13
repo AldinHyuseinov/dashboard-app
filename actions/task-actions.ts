@@ -9,6 +9,7 @@ import { Prisma } from "@/generated/prisma/client";
 import z from "zod";
 import { MAX_FILES } from "@/lib/constants";
 import { redirect } from "next/navigation";
+import { sendBulkNotification } from "./action-helpers";
 
 async function getUser() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -121,6 +122,14 @@ export async function submitTaskAction(
     return { errors: { form: "Възникна грешка при запазване." }, inputs };
   }
 
+  const actionLabel = isUpdate ? "Обновена" : "Създадена нова";
+
+  void sendBulkNotification({
+    actorId: user.id,
+    action: actionLabel,
+    category: category,
+  });
+
   if (isUpdate) {
     redirect(`/category/${category}?updated=true`);
   } else {
@@ -136,6 +145,12 @@ export async function deleteTask(taskId: string, category: string) {
   if (task?.userId !== user.id) throw new Error("You can only delete your own tasks");
 
   await prisma.task.delete({ where: { id: taskId } });
+
+  void sendBulkNotification({
+    actorId: user.id,
+    action: "Изтрита",
+    category: category,
+  });
   redirect(`/category/${category}?deleted=true`);
 }
 
