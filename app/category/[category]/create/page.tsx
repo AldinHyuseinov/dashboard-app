@@ -1,7 +1,12 @@
 import TaskForm from "@/components/task/TaskForm";
 import { auth } from "@/lib/auth";
+import { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Avexim Communication | Добавяне на задача",
+};
 
 export default async function CreateTaskPage({
   params,

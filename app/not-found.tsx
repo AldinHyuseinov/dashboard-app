@@ -1,3 +1,9 @@
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Avexim Communication | 404",
+};
+
 export default function NotFound() {
   return (
     <div className="p-2 mt-2 bg-white/95 backdrop-blur-md shadow-2xl rounded-xl border border-gray-200 text-center mx-4">

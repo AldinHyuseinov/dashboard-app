@@ -148,7 +148,7 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
     <div className="flex flex-wrap items-start justify-center w-full p-4 gap-1 pt-2">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-30 p-2">
         <h2 className="text-xl font-bold mb-1 text-tertiary-brown">
-          {existingTask ? "Редактиране" : "Създаване на задача"}
+          {existingTask ? "Публикация" : "Добавяне на задача"}
         </h2>
 
         {state.errors?.form && (

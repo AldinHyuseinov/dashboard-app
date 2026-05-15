@@ -86,23 +86,23 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
         </div>
       )}
 
-      {/* ONLY OWNER can edit or delete */}
-      {isOwner && (
-        <div className="flex justify-end gap-3 mt-2 p-1 border-t border-gray-100">
-          <button
-            onClick={onEdit}
-            className="text-xs font-bold text-primary-gold hover:underline cursor-pointer"
-          >
-            ВИЖ
-          </button>
+      <div className="flex justify-end gap-3 mt-2 p-1 border-t border-gray-100">
+        <button
+          onClick={onEdit}
+          className="text-xs font-bold text-primary-gold hover:underline cursor-pointer"
+        >
+          ВИЖ
+        </button>
+
+        {isOwner && (
           <button
             onClick={handleDelete}
             className="text-xs font-bold text-red-500 hover:underline cursor-pointer"
           >
             ИЗТРИЙ
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,11 @@
 import Alert from "@/components/notification/Alert";
+import { Metadata } from "next";
 import Image from "next/image";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Avexim Communication | Начало",
+};
 
 export default function Home() {
   return (

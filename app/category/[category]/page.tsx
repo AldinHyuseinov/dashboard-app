@@ -4,6 +4,11 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import TaskBoard from "@/components/task/TaskBoard";
 import { navLinks } from "@/lib/types";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Avexim Communication | Задачи",
+};
 
 export default async function Tasks(props: { params: Promise<{ category: string }> }) {
   const params = await props.params;
@@ -25,7 +30,7 @@ export default async function Tasks(props: { params: Promise<{ category: string 
 
   const tasks = await prisma.task.findMany({
     where: { category },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
     include: {
       files: {
         select: { id: true, fileName: true, fileType: true },
