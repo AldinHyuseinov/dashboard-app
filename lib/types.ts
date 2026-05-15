@@ -152,6 +152,7 @@ export const navLinks = [
       { label: "Кетъринг", href: "/catering" },
       { label: "Парти центрове", href: "/party-centers" },
       { label: "Премиум магазини за алкохол", href: "/premium-liquor-stores" },
+      { label: "Сватбени агенции", href: "/wedding-agencies" },
     ],
   },
   { label: "Събития", href: "/events" },

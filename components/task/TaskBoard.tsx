@@ -24,7 +24,7 @@ export default function TaskBoard({
         href={`/category/${category}/create`}
         className="bg-primary-gold text-white text-center px-6 py-2 mb-2 mx-auto rounded-md font-bold shadow hover:bg-secondary-gold-dark transition cursor-pointer block w-max"
       >
-        + Нова Задача
+        + Добави
       </Link>
 
       <Alert />
