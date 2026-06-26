@@ -10,10 +10,14 @@ export default function TaskBoard({
   initialTasks,
   category,
   currentUserId,
+  currentPage,
+  totalPages,
 }: {
   initialTasks: TaskWithFiles[];
   category: string;
   currentUserId: string;
+  currentPage: number;
+  totalPages: number;
 }) {
   const router = useRouter();
 
@@ -29,7 +33,7 @@ export default function TaskBoard({
 
       <Alert />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 lg:grid-cols-3 items-start">
+      <div className="flex flex-col gap-1">
         {initialTasks.map((task) => (
           <TaskCard
             key={task.id}
@@ -46,6 +50,40 @@ export default function TaskBoard({
           <p className="text-gray-500 col-span-full">Няма намерени задачи.</p>
         )}
       </div>
+
+      {/* --- 2. ADDED: Pagination Navigation Bar --- */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-1 mb-1 pt-1 border-t border-gray-100">
+          {/* Previous Page Link */}
+          <Link
+            href={`/category/${category}?page=${currentPage - 1}`}
+            className={`px-2 py-1.5 border rounded-md text-xs font-bold transition-all ${
+              currentPage <= 1
+                ? "pointer-events-none opacity-40 border-gray-200 text-gray-400"
+                : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:border-primary-gold"
+            }`}
+          >
+            ◄
+          </Link>
+
+          {/* Page Indicator */}
+          <span className="text-xs font-bold text-gray-500 tracking-wider">
+            Страница {currentPage} от {totalPages}
+          </span>
+
+          {/* Next Page Link */}
+          <Link
+            href={`/category/${category}?page=${currentPage + 1}`}
+            className={`px-2 py-1.5 border rounded-md text-xs font-bold transition-all ${
+              currentPage >= totalPages
+                ? "pointer-events-none opacity-40 border-gray-200 text-gray-400"
+                : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:border-primary-gold"
+            }`}
+          >
+            ►
+          </Link>
+        </div>
+      )}
     </>
   );
 }

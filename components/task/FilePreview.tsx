@@ -89,7 +89,7 @@ export const LocalFilePreview = ({
 
 const PdfPreview = (props: { fileName: string }) => {
   return (
-    <div className="flex items-center justify-center p-1 text-center max-w-15 cursor-pointer">
+    <div className="flex items-center justify-center p-1 text-center min-w-15 cursor-pointer">
       <span className="text-2xl">📄</span>
       <span className="text-[10px] text-gray-600 px-1">{props.fileName}</span>
     </div>

@@ -27,7 +27,7 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
 
   return (
     <div
-      className={`p-1 mb-2 rounded-lg border shadow-sm transition ${task.isDone ? "bg-gray-50 border-gray-200" : "bg-yellow-50/20 border-secondary-gold-dark"}`}
+      className={`p-1 mb-2 max-w-50 rounded-lg border shadow-sm transition ${task.isDone ? "bg-gray-50 border-gray-200" : "bg-white border-secondary-gold-dark"}`}
     >
       <div className="flex flex-col justify-between items-start mb-1">
         <h3
@@ -61,6 +61,7 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
         {task.description}
       </p>
 
+      {/* --- Updated File Display Section --- */}
       {task.files && task.files.length > 0 && (
         <div className="flex flex-wrap justify-center gap-2 mb-2">
           {task.files.map((file) => {
@@ -68,18 +69,51 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
             return (
               <a
                 key={file.id}
-                href={`/api/files/${file.id}`} // Links to the API route to fetch the actual Bytes
+                href={`/api/files/${file.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`flex items-center gap-1 px-2 py-1 border rounded-md text-xs transition-colors ${
-                  task.isDone
-                    ? "border-gray-200 text-gray-400 hover:bg-gray-100"
-                    : "border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-primary-gold"
-                }`}
+                className="block"
                 title={file.fileName}
               >
-                <span>{isImage ? "🖼️" : "📄"}</span>
-                <span className="truncate max-w-[120px]">{file.fileName}</span>
+                {isImage ? (
+                  /* Image Thumbnail */
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/api/files/${file.id}`}
+                    alt={file.fileName}
+                    className={`w-16 h-16 object-cover rounded-md border transition-all ${
+                      task.isDone
+                        ? "border-gray-200 opacity-50 grayscale hover:opacity-75"
+                        : "border-gray-200 hover:border-primary-gold hover:scale-105"
+                    }`}
+                  />
+                ) : (
+                  /* PDF */
+                  <div
+                    className={`w-16 h-16 border rounded-md flex flex-col items-center justify-between p-1 bg-red-50/30 transition-all select-none ${
+                      task.isDone
+                        ? "border-gray-200 opacity-50 grayscale"
+                        : "border-gray-200 hover:border-red-500 hover:scale-105"
+                    }`}
+                  >
+                    {/* PDF Badge */}
+                    <span className="bg-red-600 text-white font-black text-[8px] px-1 rounded-sm uppercase tracking-wider leading-normal">
+                      PDF
+                    </span>
+
+                    {/* Center Icon */}
+                    <span className="text-5xl leading-none">📄</span>
+
+                    {/* Truncated Name at Bottom */}
+                    <span
+                      className={`text-[16px] font-medium truncate w-full text-center px-0.5 ${
+                        task.isDone ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      {file.fileName}
+                    </span>
+                  </div>
+                )}
               </a>
             );
           })}
