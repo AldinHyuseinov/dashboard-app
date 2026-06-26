@@ -95,3 +95,25 @@ const PdfPreview = (props: { fileName: string }) => {
     </div>
   );
 };
+
+export const PdfPreviewLarge = (props: { fileName: string; styleCondition: boolean }) => {
+  return (
+    <div
+      className={`w-16 h-16 border rounded-md flex flex-col items-center justify-between p-1 bg-red-50/30 transition-all select-none ${
+        props.styleCondition
+          ? "border-gray-200 opacity-50 grayscale"
+          : "border-gray-200 hover:border-red-500 hover:scale-105"
+      }`}
+    >
+      <span className="bg-red-600 text-white font-black text-[8px] px-1 rounded-sm uppercase tracking-wider leading-normal">
+        PDF
+      </span>
+      <span className="text-5xl leading-none">📄</span>
+      <span
+        className={`text-[16px] font-medium truncate w-full text-center px-0.5 ${props.styleCondition ? "text-gray-400" : "text-gray-500"}`}
+      >
+        {props.fileName}
+      </span>
+    </div>
+  );
+};

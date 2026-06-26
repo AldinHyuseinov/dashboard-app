@@ -112,6 +112,10 @@ export type Task = {
   updatedAt: Date;
 };
 
+export type TaskMetaProps = {
+  task: TaskWithFiles;
+};
+
 export type TaskFileMeta = {
   id: string;
   fileName: string;
@@ -127,7 +131,7 @@ export type TaskCardProps = {
   task: TaskWithFiles;
   category: string;
   currentUserId: string;
-  onEdit: () => void;
+  onView: () => void;
 };
 
 export type TaskFormProps = {
@@ -139,6 +143,13 @@ export type TaskFormProps = {
     description: string;
     files: TaskFileMeta[];
   };
+};
+
+export type Comment = {
+  id: string;
+  text: string;
+  createdAt: Date;
+  user: { name: string | null };
 };
 
 export const navLinks = [

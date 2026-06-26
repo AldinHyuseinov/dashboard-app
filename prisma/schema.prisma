@@ -23,6 +23,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   tasks         Task[]
+  comments      Comment[]
 
   @@unique([email])
   @@map("user")
@@ -88,6 +89,17 @@ model TaskFile {
   createdAt DateTime @default(now())
 }
 
+model Comment {
+  id        String   @id @default(cuid())
+  text      String   @db.NVarChar(Max)
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  createdAt DateTime @default(now())
+}
+
 model Task {
   id          String   @id @default(cuid())
   title       String
@@ -99,5 +111,6 @@ model Task {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  files TaskFile[]
+  files       TaskFile[]
+  comments    Comment[]
 }

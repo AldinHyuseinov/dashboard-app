@@ -40,9 +40,9 @@ export default function TaskBoard({
             task={task}
             category={category}
             currentUserId={currentUserId}
-            onEdit={() => {
-              // Navigate to the edit page for this specific task
-              router.push(`/category/${category}/${task.id}/edit`);
+            onView={() => {
+              // Navigates to the read-only view page
+              router.push(`/category/${category}/${task.id}`);
             }}
           />
         ))}

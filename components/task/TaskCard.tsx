@@ -2,10 +2,16 @@
 
 import { deleteTask, toggleTaskStatus } from "@/actions/task-actions";
 import { TaskCardProps } from "@/lib/types";
-import { formatDate } from "@/lib/utils";
 import { useTransition } from "react";
+import { PdfPreviewLarge } from "./FilePreview";
+import TaskMeta from "./TaskMeta";
 
-export default function TaskCard({ task, category, currentUserId, onEdit }: TaskCardProps) {
+export default function TaskCard({
+  task,
+  category,
+  currentUserId,
+  onView,
+}: TaskCardProps & { onView: () => void }) {
   const [isPending, startTransition] = useTransition();
   const isOwner = task.userId === currentUserId;
 
@@ -23,11 +29,11 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
     }
   };
 
-  const isModified = new Date(task.updatedAt).getTime() - new Date(task.createdAt).getTime() > 2000;
-
   return (
     <div
-      className={`p-1 mb-2 max-w-50 rounded-lg border shadow-sm transition ${task.isDone ? "bg-gray-50 border-gray-200" : "bg-white border-secondary-gold-dark"}`}
+      className={`relative h-fit max-w-50 p-1 mb-2 rounded-lg border shadow-sm transform transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-xl hover:z-10 hover:border-primary-gold ${
+        task.isDone ? "bg-gray-50 border-gray-200" : "bg-white border-secondary-gold-dark"
+      }`}
     >
       <div className="flex flex-col justify-between items-start mb-1">
         <h3
@@ -44,26 +50,18 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
           />
         </h3>
 
-        <div className="mt-1 text-xs text-gray-400 flex flex-col gap-0.5">
-          <p>
-            От: <span className="font-bold text-gray-600">{task.user?.name || "Неизвестен"}</span>{" "}
-            на {formatDate(task.createdAt)}
-          </p>
-          {isModified && (
-            <p className="italic text-gray-400">Редактирана на {formatDate(task.updatedAt)}</p>
-          )}
-        </div>
+        <TaskMeta task={task} />
       </div>
 
       <p
-        className={`text-sm mb-2 whitespace-pre-wrap ${task.isDone ? "text-gray-400" : "text-gray-600"}`}
+        className={`text-sm mb-4 whitespace-pre-wrap wrap-break-word ${task.isDone ? "text-gray-400 line-through" : "text-gray-600"}`}
       >
         {task.description}
       </p>
 
-      {/* --- Updated File Display Section --- */}
+      {/* Attachments (Uniform Square Previews) */}
       {task.files && task.files.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-2">
+        <div className="flex flex-wrap justify-center gap-2 mb-2 items-center">
           {task.files.map((file) => {
             const isImage = file.fileType.startsWith("image/");
             return (
@@ -76,7 +74,6 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
                 title={file.fileName}
               >
                 {isImage ? (
-                  /* Image Thumbnail */
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={`/api/files/${file.id}`}
@@ -88,31 +85,7 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
                     }`}
                   />
                 ) : (
-                  /* PDF */
-                  <div
-                    className={`w-16 h-16 border rounded-md flex flex-col items-center justify-between p-1 bg-red-50/30 transition-all select-none ${
-                      task.isDone
-                        ? "border-gray-200 opacity-50 grayscale"
-                        : "border-gray-200 hover:border-red-500 hover:scale-105"
-                    }`}
-                  >
-                    {/* PDF Badge */}
-                    <span className="bg-red-600 text-white font-black text-[8px] px-1 rounded-sm uppercase tracking-wider leading-normal">
-                      PDF
-                    </span>
-
-                    {/* Center Icon */}
-                    <span className="text-5xl leading-none">📄</span>
-
-                    {/* Truncated Name at Bottom */}
-                    <span
-                      className={`text-[16px] font-medium truncate w-full text-center px-0.5 ${
-                        task.isDone ? "text-gray-400" : "text-gray-500"
-                      }`}
-                    >
-                      {file.fileName}
-                    </span>
-                  </div>
+                  <PdfPreviewLarge fileName={file.fileName} styleCondition={task.isDone} />
                 )}
               </a>
             );
@@ -120,9 +93,11 @@ export default function TaskCard({ task, category, currentUserId, onEdit }: Task
         </div>
       )}
 
+      {/* Action Footer */}
       <div className="flex justify-end gap-3 mt-2 p-1 border-t border-gray-100">
+        {/* VIEW BUTTON (Now triggers onView) */}
         <button
-          onClick={onEdit}
+          onClick={onView}
           className="text-xs font-bold text-primary-gold hover:underline cursor-pointer"
         >
           ВИЖ
