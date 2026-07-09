@@ -59,11 +59,29 @@ export default function TaskCard({
         {task.description}
       </p>
 
-      {/* Attachments (Uniform Square Previews) */}
+      {/* Attachments */}
       {task.files && task.files.length > 0 && (
         <div className="flex flex-wrap justify-center gap-2 mb-2 items-center">
           {task.files.map((file) => {
             const isImage = file.fileType.startsWith("image/");
+            const isVideo = file.fileType.startsWith("video/");
+
+            if (isVideo) {
+              return (
+                <div
+                  key={file.id}
+                  className="max-w-35 rounded-lg overflow-hidden border border-gray-200 bg-black"
+                >
+                  <video
+                    src={`/api/files/${file.id}`}
+                    controls
+                    preload="metadata"
+                    className="w-full h-full block"
+                  />
+                </div>
+              );
+            }
+
             return (
               <a
                 key={file.id}

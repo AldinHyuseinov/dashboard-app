@@ -2,9 +2,8 @@
 # 1. Base image
 # ==========================================
 FROM node:24-alpine AS base
-# Prisma requires openssl for its query engine on alpine
 RUN apk add --no-cache openssl libc6-compat
-
+RUN apk add --no-cache openssl libc6-compat ffmpeg
 # ==========================================
 # 2. Install dependencies & Generate Prisma
 # ==========================================

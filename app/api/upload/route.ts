@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import sharp from "sharp";
 import { Prisma } from "@/generated/prisma/client";
 import { MAX_FILE_SIZE } from "@/lib/constants";
+import { compressVideo } from "@/lib/video";
 
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -26,13 +27,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 1. Get the raw bytes from the file
+  // 2. Get the raw bytes from the file
   const arrayBuffer = await file.arrayBuffer();
 
   let buffer = Buffer.from(arrayBuffer as ArrayBuffer);
   let finalFileType = file.type;
 
-  // 2. Process with Sharp if it's an image
+  // 3. Process with Sharp if it's an image
   if (file.type.startsWith("image/")) {
     try {
       const compressedBuffer = await sharp(buffer)
@@ -49,14 +50,33 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 3. Construct the database object directly
+  // 4. Process with FFmpeg if it's a video
+  if (file.type.startsWith("video/")) {
+    try {
+      buffer = Buffer.from(await compressVideo(buffer));
+      finalFileType = "video/mp4";
+    } catch (e) {
+      console.error("Native FFmpeg compression failed", e);
+      return NextResponse.json(
+        { error: "Грешка при обработка на видеото. (Макс. дължина: 5 минути.)" },
+        { status: 500 },
+      );
+    }
+  }
+
+  // 5. Force standard .mp4 extension for video files, otherwise keep original name
+  const finalFileName = file.type.startsWith("video/")
+    ? file.name.replace(/\.[^/.]+$/, "") + ".mp4"
+    : file.name;
+
+  // 6. Construct the database object directly
   const fileData: Prisma.TaskFileCreateWithoutTaskInput = {
-    fileName: file.name,
+    fileName: finalFileName,
     fileType: finalFileType,
     data: buffer,
   };
 
-  // Create an "orphaned" file record
+  // 7. Create an "orphaned" file record in the database
   const savedFile = await prisma.taskFile.create({
     data: fileData,
     select: { id: true },

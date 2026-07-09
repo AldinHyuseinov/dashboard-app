@@ -76,7 +76,7 @@ export default function TaskCommentsSection({
         <button
           type="submit"
           disabled={isPending}
-          className="bg-primary-gold hover:bg-secondary-gold-dark text-white text-xs font-bold px-1 py-1 rounded cursor-pointer transition-colors disabled:bg-gray-400 shrink-0"
+          className="bg-primary-gold hover:bg-secondary-gold-dark text-white text-xs font-bold px-0.5 py-1 rounded cursor-pointer transition-colors disabled:bg-gray-400 shrink-0"
         >
           {isPending ? "..." : "Изпрати"}
         </button>

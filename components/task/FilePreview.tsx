@@ -10,6 +10,7 @@ export const ExistingFilePreview = ({
   onRemove: (id: string) => void;
 }) => {
   const isImage = file.fileType.startsWith("image/");
+  const isVideo = file.fileType.startsWith("video/");
   const fileUrl = `/api/files/${file.id}`;
 
   return (
@@ -36,6 +37,9 @@ export const ExistingFilePreview = ({
         {isImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={fileUrl} alt={file.fileName} className="w-full object-cover" />
+        ) : isVideo ? (
+          /* Render looping, muted video preview */
+          <video src={fileUrl} muted loop playsInline autoPlay className="w-full object-cover" />
         ) : (
           <PdfPreview fileName={file.fileName} />
         )}
@@ -54,6 +58,7 @@ export const LocalFilePreview = ({
   onRemove: () => void;
 }) => {
   const isImage = file.type.startsWith("image/");
+  const isVideo = file.type.startsWith("video/"); // Detect video
 
   return (
     <div className="relative group">
@@ -79,6 +84,16 @@ export const LocalFilePreview = ({
         {isImage && previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={previewUrl} alt={file.name} className="object-cover w-full opacity-90" />
+        ) : isVideo && previewUrl ? (
+          /* Render looping, muted video preview for local files */
+          <video
+            src={previewUrl}
+            muted
+            loop
+            playsInline
+            autoPlay
+            className="object-cover w-full opacity-90"
+          />
         ) : (
           <PdfPreview fileName={file.name} />
         )}

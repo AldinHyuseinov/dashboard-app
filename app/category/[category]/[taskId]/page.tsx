@@ -37,6 +37,10 @@ export default async function TaskDetailPage({
 
   const isOwner = task.userId === session.user.id;
 
+  // Helpers to check for file types
+  const hasVideos = task.files.some((f) => f.fileType.startsWith("video/"));
+  const hasOtherFiles = task.files.some((f) => !f.fileType.startsWith("video/"));
+
   return (
     <div className="flex flex-col gap-2 justify-center items-center mx-auto p-2 w-full max-w-md md:max-w-3xl overflow-x-hidden">
       <div className="bg-white rounded-xl shadow-xl p-3 relative w-full border border-gray-100 min-w-0">
@@ -53,37 +57,73 @@ export default async function TaskDetailPage({
           {task.description}
         </p>
 
-        {/* Image/PDF Attachment Thumbnails */}
+        {/* Image/PDF/Video Attachment Thumbnails */}
         {task.files && task.files.length > 0 && (
           <div className="mb-2">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-              Прикачени файлове
-            </h3>
-            <div className="flex justify-center flex-wrap gap-2">
-              {task.files.map((file) => {
-                const isImage = file.fileType.startsWith("image/");
-                return (
-                  <a
-                    key={file.id}
-                    href={`/api/files/${file.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={file.fileName}
-                  >
-                    {isImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`/api/files/${file.id}`}
-                        alt={file.fileName}
-                        className="w-16 h-16 object-cover rounded-md border border-gray-200 hover:border-primary-gold transition-all hover:scale-105"
-                      />
-                    ) : (
-                      <PdfPreviewLarge fileName={file.fileName} styleCondition={task.isDone} />
-                    )}
-                  </a>
-                );
-              })}
-            </div>
+            {/* 1. Video Playback Section (Inline player for immediate viewing) */}
+            {hasVideos && (
+              <div className="mb-2 pb-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                  Видеa
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {task.files
+                    .filter((f) => f.fileType.startsWith("video/"))
+                    .map((file) => (
+                      <div
+                        key={file.id}
+                        className="w-full rounded-lg overflow-hidden border border-gray-200 bg-black"
+                      >
+                        <video
+                          src={`/api/files/${file.id}`}
+                          controls
+                          preload="metadata"
+                          className="w-full h-full animate-all"
+                        />
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* 2. Attached Files Section (Only rendered if there are actual non-video files) */}
+            {hasOtherFiles && (
+              <div className="mb-2">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                  Прикачени файлове
+                </h3>
+                <div className="flex justify-center flex-wrap gap-2">
+                  {task.files
+                    .filter((f) => !f.fileType.startsWith("video/"))
+                    .map((file) => {
+                      const isImage = file.fileType.startsWith("image/");
+                      return (
+                        <a
+                          key={file.id}
+                          href={`/api/files/${file.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={file.fileName}
+                        >
+                          {isImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={`/api/files/${file.id}`}
+                              alt={file.fileName}
+                              className="w-16 h-16 object-cover rounded-md border border-gray-200 hover:border-primary-gold transition-all hover:scale-105"
+                            />
+                          ) : (
+                            <PdfPreviewLarge
+                              fileName={file.fileName}
+                              styleCondition={task.isDone}
+                            />
+                          )}
+                        </a>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -100,7 +140,7 @@ export default async function TaskDetailPage({
           {isOwner && (
             <Link
               href={`/category/${category}/${task.id}/edit`}
-              className="px-2 py-2 bg-primary-gold hover:bg-secondary-gold-dark text-white rounded-md text-sm font-bold transition shadow-sm"
+              className="px-1 py-2 bg-primary-gold hover:bg-secondary-gold-dark text-white rounded-md text-sm font-bold transition shadow-sm"
             >
               Редактирай
             </Link>
