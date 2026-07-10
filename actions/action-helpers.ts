@@ -1,6 +1,6 @@
 import { transporter } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
-import { navLinks } from "@/lib/types";
+import { CommentInteractionType, INTERACTION_COPY, navLinks } from "@/lib/types";
 
 export async function sendBulkNotification({
   actorId,
@@ -47,14 +47,16 @@ export async function sendCommentNotification({
   actorName,
   taskTitle,
   category,
+  type,
 }: {
   actorId: string;
   actorName: string;
   taskTitle: string;
   category: string;
+  type: CommentInteractionType;
 }) {
   try {
-    // 1. Get everyone's email except the person who commented
+    // Get everyone's email except the person who triggered the interaction
     const recipients = await prisma.user.findMany({
       where: { id: { not: actorId } },
       select: { email: true },
@@ -64,20 +66,20 @@ export async function sendCommentNotification({
 
     const emailList = recipients.map((r) => r.email);
     const categoryLabel = getCategoryLabel(category);
+    const copy = INTERACTION_COPY[type];
 
-    // 2. Send the SMTP mail
     await transporter.sendMail({
       from: `"AVEXIM Система" <${process.env.SMTP_USER}>`,
       to: emailList,
-      subject: `Нов коментар: ${taskTitle}`,
+      subject: `${copy.subjectVerb}: ${taskTitle}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 600px;">
           <h3 style="color: #CDA349; margin-top: 0;">AVEXIM Платформа</h3>
           <p style="font-size: 15px; color: #333;">
-            Потребителят <strong>${actorName}</strong> написа нов коментар по задача: 
+            Потребителят <strong>${actorName}</strong> ${copy.bodyVerb}:
             <strong>${taskTitle}</strong> в категория <span style="color: #CDA349; font-weight: bold;">${categoryLabel}</span>.
           </p>
-          
+ 
           <p style="font-size: 12px; color: #888; border-top: 1px solid #eee;">
             Това е автоматично системно известие.
           </p>
@@ -85,7 +87,7 @@ export async function sendCommentNotification({
       `,
     });
   } catch (err) {
-    console.error("Comment notification email failed:", err);
+    console.error(`Comment notification email failed (${type}):`, err);
   }
 }
 

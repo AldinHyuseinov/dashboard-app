@@ -4,9 +4,9 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import TaskCommentsSection from "@/components/task/TaskCommentsSection";
 import { PdfPreviewLarge } from "@/components/task/FilePreview";
 import TaskMeta from "@/components/task/TaskMeta";
+import TaskCommentsSection from "@/components/comments/TaskCommentsSection";
 
 export default async function TaskDetailPage({
   params,
@@ -28,7 +28,14 @@ export default async function TaskDetailPage({
       files: { select: { id: true, fileName: true, fileType: true } },
       comments: {
         orderBy: { createdAt: "asc" },
-        include: { user: { select: { name: true } } },
+        include: {
+          user: { select: { name: true } },
+          reactions: {
+            include: {
+              user: { select: { name: true } },
+            },
+          },
+        },
       },
     },
   });
@@ -152,7 +159,13 @@ export default async function TaskDetailPage({
         <h2 className="text-lg font-bold mb-2 text-tertiary-brown border-b border-gray-100 pb-2">
           Коментари
         </h2>
-        <TaskCommentsSection taskId={task.id} initialComments={task.comments} category={category} />
+        <TaskCommentsSection
+          taskId={task.id}
+          taskOwnerId={task.userId}
+          initialComments={task.comments}
+          category={category}
+          currentUserId={session.user.id}
+        />
       </div>
     </div>
   );

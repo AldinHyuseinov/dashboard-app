@@ -145,12 +145,49 @@ export type TaskFormProps = {
   };
 };
 
+export type CommentReaction = {
+  id: string;
+  emoji: string;
+  userId: string;
+  user: { name: string | null };
+};
+
 export type Comment = {
   id: string;
   text: string;
   createdAt: Date;
+  editedAt?: Date | null;
+  isPinned?: boolean;
+  userId: string;
   user: { name: string | null };
+  parentId?: string | null;
+  reactions?: CommentReaction[];
 };
+
+export type CommentThreadData = {
+  topLevel: Comment;
+  replies: Comment[];
+};
+
+export type SortMode = "top" | "newest";
+
+export type CommentInteractionType = "comment" | "reply" | "reaction";
+
+export const INTERACTION_COPY: Record<CommentInteractionType, { subjectVerb: string; bodyVerb: string }> =
+  {
+    comment: {
+      subjectVerb: "Нов коментар",
+      bodyVerb: "написа нов коментар по задача",
+    },
+    reply: {
+      subjectVerb: "Нов отговор",
+      bodyVerb: "отговори на коментар по задача",
+    },
+    reaction: {
+      subjectVerb: "Нова реакция",
+      bodyVerb: "реагира на коментар по задача",
+    },
+  };
 
 export const navLinks = [
   {
