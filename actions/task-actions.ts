@@ -9,7 +9,7 @@ import { Prisma } from "@/generated/prisma/client";
 import z from "zod";
 import { MAX_FILES } from "@/lib/constants";
 import { redirect } from "next/navigation";
-import { sendBulkNotification } from "./action-helpers";
+import { notifyTaskChange } from "@/lib/notifications";
 
 async function getUser() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -124,7 +124,7 @@ export async function submitTaskAction(
 
   const actionLabel = isUpdate ? "Обновена" : "Създадена нова";
 
-  void sendBulkNotification({
+  void notifyTaskChange({
     actorId: user.id,
     action: actionLabel,
     category: category,
@@ -146,7 +146,7 @@ export async function deleteTask(taskId: string, category: string) {
 
   await prisma.task.delete({ where: { id: taskId } });
 
-  void sendBulkNotification({
+  void notifyTaskChange({
     actorId: user.id,
     action: "Изтрита",
     category: category,

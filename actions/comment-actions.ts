@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { sendCommentNotification } from "./action-helpers";
+import { notifyComment } from "@/lib/notifications";
 
 export async function createCommentAction(
   {
@@ -51,7 +51,7 @@ export async function createCommentAction(
 
   revalidatePath(`/category/${category}`);
 
-  void sendCommentNotification({
+  void notifyComment({
     actorId: session.user.id,
     actorName: session.user.name ?? "Потребител",
     taskTitle: task.title,
@@ -167,7 +167,7 @@ export async function toggleReactionAction(commentId: string, emoji: string, cat
     });
 
     if (comment) {
-      void sendCommentNotification({
+      void notifyComment({
         actorId: session.user.id,
         actorName: session.user.name ?? "Потребител",
         taskTitle: comment.task.title,
