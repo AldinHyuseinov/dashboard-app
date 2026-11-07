@@ -27,14 +27,14 @@ export default function TaskBoard({
       {/* Changed to a Link for creating a new task */}
       <Link
         href={`/category/${category}/create`}
-        className="bg-primary-gold text-white text-center px-6 py-2 mb-2 mx-auto rounded-md font-bold shadow hover:bg-secondary-gold-dark transition cursor-pointer block w-max"
+        className="bg-primary-gold text-on-gold text-center px-12 py-4 mb-4 mx-auto rounded-md font-bold shadow hover:brightness-95 transition cursor-pointer block w-max"
       >
         + Добави
       </Link>
 
       <Alert />
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-2">
         {initialTasks.map((task) => (
           <TaskCard
             key={task.id}

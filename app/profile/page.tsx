@@ -1,3 +1,4 @@
+import { signOutAction } from "@/actions/auth-actions";
 import ProfileForm from "@/components/forms/ProfileForm";
 import { auth } from "@/lib/auth";
 import { Metadata } from "next";
@@ -18,10 +19,17 @@ export default async function Profile() {
   }
 
   return (
-    <ProfileForm
-      name={session.user.name}
-      email={session.user.email}
-      isVerified={session.user.emailVerified}
-    />
+    <>
+      <ProfileForm
+        name={session.user.name}
+        email={session.user.email}
+        isVerified={session.user.emailVerified}
+      />
+      <form action={signOutAction} className="w-full px-8 pb-4 sm:max-w-md sm:px-0">
+        <button type="submit" className="btn-ghost w-full">
+          Излез
+        </button>
+      </form>
+    </>
   );
 }

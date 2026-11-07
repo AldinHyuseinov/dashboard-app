@@ -22,12 +22,12 @@ export default async function Home(props: { searchParams: Promise<{ page?: strin
   const feed = await activity.feed(actor, { page: Number(searchParams.page) });
 
   return (
-    <main className="w-full max-w-3xl mx-auto mt-2 px-2 flex flex-col">
+    <div className="w-full max-w-3xl mx-auto mt-4 px-4 flex flex-col">
       <Suspense fallback={null}>
         <Alert />
       </Suspense>
 
-      <div className="flex justify-center items-center mb-2 border-b border-primary-gold p-1">
+      <div className="flex justify-center items-center mb-4 border-b border-primary-gold p-2">
         <h1 className="text-3xl font-bold text-tertiary-brown text-center">Активност</h1>
       </div>
 
@@ -38,6 +38,6 @@ export default async function Home(props: { searchParams: Promise<{ page?: strin
         totalPages={feed.totalPages}
         pageHref={(page) => `/?page=${page}`}
       />
-    </main>
+    </div>
   );
 }

@@ -2,8 +2,8 @@
 
 export default function LoadingSpinner({ fullPage = false }: { fullPage?: boolean }) {
   const content = (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <div className="relative w-16 h-16">
+    <div className="flex flex-col items-center justify-center gap-8">
+      <div className="relative w-32 h-32">
         {/* Background Pulse Ring */}
         <div className="absolute inset-0 rounded-full border-2 border-primary-gold/20 animate-pulse"></div>
 
@@ -11,14 +11,14 @@ export default function LoadingSpinner({ fullPage = false }: { fullPage?: boolea
         <div className="absolute inset-0 rounded-full border-t-2 border-primary-gold animate-spin"></div>
 
         {/* Central Logo-style Ring */}
-        <div className="absolute inset-2 rounded-full border border-primary-gold/40 flex items-center justify-center">
+        <div className="absolute inset-4 rounded-full border border-primary-gold/40 flex items-center justify-center">
           {/* The "Logo Dot" */}
-          <div className="w-2 h-2 bg-red-800 rounded-full shadow-[0_0_8px_rgba(153,27,27,0.6)]"></div>
+          <div className="w-4 h-4 bg-red-800 rounded-full shadow-[0_0_8px_rgba(153,27,27,0.6)]"></div>
         </div>
 
         {/* Orbiting Dot */}
         <div className="absolute inset-0 animate-[spin_1.5s_linear_infinite]">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-primary-gold rounded-full"></div>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-primary-gold rounded-full"></div>
         </div>
       </div>
 
@@ -37,5 +37,5 @@ export default function LoadingSpinner({ fullPage = false }: { fullPage?: boolea
     );
   }
 
-  return <div className="py-10 flex justify-center w-full">{content}</div>;
+  return <div className="py-20 flex justify-center w-full">{content}</div>;
 }

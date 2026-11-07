@@ -52,7 +52,7 @@ export default function CommentThread({
   };
 
   return (
-    <div className="comment-thread-container flex flex-col gap-1 min-w-0">
+    <div className="comment-thread-container flex flex-col gap-2 min-w-0">
       <CommentCard
         comment={topLevel}
         isTopLevel
@@ -72,12 +72,12 @@ export default function CommentThread({
       />
 
       {replies.length > 0 && (
-        <div className="flex flex-col gap-1 mt-1">
+        <div className="flex flex-col gap-2 mt-2">
           {!repliesOpen ? (
             <button
               type="button"
               onClick={() => setRepliesOpen(true)}
-              className="flex items-center gap-1 text-[12px] font-bold text-primary-gold hover:underline cursor-pointer w-fit"
+              className="flex items-center gap-2 text-[12px] font-bold text-primary-gold hover:underline cursor-pointer w-fit"
             >
               <ChevronIcon />
               Покажи {replies.length} {replies.length === 1 ? "отговор" : "отговора"}
@@ -87,7 +87,7 @@ export default function CommentThread({
               <button
                 type="button"
                 onClick={() => setRepliesOpen(false)}
-                className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 hover:text-primary-gold cursor-pointer w-fit"
+                className="flex items-center gap-3 text-[11px] font-bold text-gray-500 hover:text-primary-gold cursor-pointer w-fit"
               >
                 <ChevronIcon flipped />
                 Скрий отговорите
@@ -196,21 +196,21 @@ function CommentCard({
     <div
       id={`comment-${comment.id}`}
       data-author-name={authorName}
-      className={`flex flex-col gap-1 rounded-lg border min-w-0 transition-all duration-300 ${
+      className={`flex flex-col gap-2 rounded-lg border min-w-0 transition-all duration-300 ${
         comment.isPinned ? "border-primary-gold/40 bg-yellow-50/40" : "border-gray-100"
       } ${
-        isTopLevel ? "text-[12px] bg-gray-50/50 p-2" : "text-[12px] bg-[#fdfdfd] p-2"
+        isTopLevel ? "text-[12px] bg-gray-50/50 p-4" : "text-[12px] bg-white p-4"
       } ${comment.isPinned && !isTopLevel ? "bg-yellow-50/40" : ""}`}
     >
       {comment.isPinned && (
-        <div className="flex items-center gap-1 text-[12px] font-bold text-primary-gold">
+        <div className="flex items-center gap-2 text-[12px] font-bold text-primary-gold">
           <PinIcon />
           <span>Закачен коментар</span>
         </div>
       )}
 
       {replyingToName && replyingToText && (
-        <div className="flex items-center gap-1 min-w-0 text-[12px] text-gray-700">
+        <div className="flex items-center gap-2 min-w-0 text-[12px] text-gray-700">
           <span className="shrink-0 text-gray-500">↳</span>
           <span className="truncate min-w-0">
             Отговор до <strong className="text-primary-gold not-italic">{replyingToName}</strong>:
@@ -219,8 +219,8 @@ function CommentCard({
         </div>
       )}
 
-      <div className="flex justify-between items-center gap-x-1.5 gap-y-0.5 min-w-0">
-        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0 min-w-0 text-[10px] text-gray-500 font-bold">
+      <div className="flex justify-between items-center gap-x-3 gap-y-1 min-w-0">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0 min-w-0 text-[10px] text-gray-500 font-bold">
           <span className="truncate min-w-0 max-w-full">{authorName}</span>
           <span className="shrink-0">
             {formatDate(comment.createdAt)}
@@ -243,19 +243,19 @@ function CommentCard({
       </div>
 
       {isEditing ? (
-        <div className="flex flex-col gap-1 mt-0.5">
+        <div className="flex flex-col gap-2 mt-1">
           <textarea
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             autoFocus
             rows={2}
-            className="w-full min-w-0 text-xs border border-gray-300 rounded p-1.5 outline-none focus:ring-1 focus:ring-primary-gold focus:border-primary-gold bg-white resize-none"
+            className="w-full min-w-0 text-xs border border-gray-300 rounded p-3 focus:ring-1 focus:ring-primary-gold focus:border-primary-gold bg-white resize-none"
           />
-          <div className="flex justify-end gap-1.5">
+          <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="text-[12px] font-bold text-gray-500 hover:bg-gray-100 rounded px-2 py-1 cursor-pointer transition-colors"
+              className="text-[12px] font-bold text-gray-500 hover:bg-gray-100 rounded px-4 py-2 cursor-pointer transition-colors"
             >
               Отказ
             </button>
@@ -263,7 +263,7 @@ function CommentCard({
               type="button"
               onClick={submitEdit}
               disabled={isPending || !editValue.trim()}
-              className="text-[12px] font-bold text-white bg-primary-gold hover:bg-secondary-gold-dark rounded px-2.5 py-1 cursor-pointer transition-colors"
+              className="text-[12px] font-bold text-on-gold bg-primary-gold hover:brightness-95 rounded px-5 py-2 cursor-pointer transition-colors"
             >
               Запази
             </button>
@@ -280,7 +280,7 @@ function CommentCard({
       )}
 
       {hasReactions && !isEditing && (
-        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+        <div className="flex flex-wrap items-center gap-2 mt-1">
           {Object.entries(reactionCounts).map(([emoji, count]) => {
             const mine = activeReactions.includes(emoji);
             return (
@@ -288,7 +288,7 @@ function CommentCard({
                 key={emoji}
                 type="button"
                 onClick={() => onReact(emoji)}
-                className={`px-1.5 py-0.5 rounded-full border text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-transform hover:scale-105 shadow-sm ${
+                className={`px-3 py-1 rounded-full border text-[11px] font-bold flex items-center gap-2 cursor-pointer transition-transform hover:scale-105 shadow-sm ${
                   mine
                     ? "bg-linear-to-br from-yellow-100 to-yellow-50 border-primary-gold text-primary-gold"
                     : "bg-white border-gray-200 text-gray-600"
@@ -304,7 +304,7 @@ function CommentCard({
 
       {/* A Comment that isn't saved yet has no identity a Reply could answer. */}
       {!isEditing && !comment.id.startsWith("optimistic-") && (
-        <div className="flex justify-end items-center pt-1 mt-0.5 border-t border-gray-100/50">
+        <div className="flex justify-end items-center pt-2 mt-1 border-t border-gray-100/50">
           <button
             type="button"
             onClick={onToggleReply}
@@ -316,7 +316,7 @@ function CommentCard({
       )}
 
       {isReplying && !isEditing && (
-        <div className="mt-1">
+        <div className="mt-2">
           <CommentInput
             size="sm"
             autoFocus

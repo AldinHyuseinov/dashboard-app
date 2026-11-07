@@ -41,7 +41,7 @@ export default function CommentMenu({
 
   return (
     <div className="relative shrink-0" ref={ref}>
-      {/* Trigger: was accidentally sized down to w-3 h-3 (12px) — smaller
+      {/* Trigger: was accidentally sized down to 12px — smaller
           than its own 14px icon, which is what made the dots render broken
           and made the button nearly untappable on mobile. Restored to a
           real tap target. */}
@@ -49,7 +49,7 @@ export default function CommentMenu({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label="Опции"
-        className="w-3 h-3 shrink-0 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+        className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
           <circle cx="12" cy="5" r="2" />
@@ -60,7 +60,7 @@ export default function CommentMenu({
 
       {open && (
         <div
-          className="absolute -right-2 top-3 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1.5 flex flex-col"
+          className="absolute -right-4 top-6 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-3 flex flex-col"
           style={{ width: "224px", maxWidth: "calc(100vw - 2rem)" }}
         >
           {/* Emoji grid: a plain CSS grid (4 columns) instead of flex-wrap.
@@ -69,7 +69,7 @@ export default function CommentMenu({
               emoji to stack one-per-row instead of flowing side by side.
               A fixed 4-column grid can't collapse like that regardless of
               how the popover's own width resolves. */}
-          <div className="px-2.5 pb-1.5 mb-1 border-b border-gray-100 grid grid-cols-4 gap-1 justify-items-center">
+          <div className="px-5 pb-3 mb-2 border-b border-gray-100 grid grid-cols-4 gap-2 justify-items-center">
             {REACTION_EMOJIS.map((emoji) => {
               const active = activeReactions.includes(emoji);
               return (
@@ -80,7 +80,7 @@ export default function CommentMenu({
                     onReact(emoji);
                     setOpen(false);
                   }}
-                  className={`text-base w-3 h-3 flex items-center justify-center rounded-full transition-transform hover:scale-125 cursor-pointer ${
+                  className={`text-base w-6 h-6 flex items-center justify-center rounded-full transition-transform hover:scale-125 cursor-pointer ${
                     active ? "bg-yellow-100 ring-1 ring-primary-gold" : "hover:bg-gray-100"
                   }`}
                 >
@@ -97,7 +97,7 @@ export default function CommentMenu({
                 onPin();
                 setOpen(false);
               }}
-              className="text-left px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-1.5"
+              className="text-left px-5 py-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3"
             >
               <PinIcon />
               {isPinned ? "Откачи коментар" : "Закачи коментар"}
@@ -111,7 +111,7 @@ export default function CommentMenu({
                 onEdit();
                 setOpen(false);
               }}
-              className="text-left px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-1.5"
+              className="text-left px-5 py-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3"
             >
               <EditIcon />
               Редактирай
@@ -124,14 +124,14 @@ export default function CommentMenu({
                 <button
                   type="button"
                   onClick={() => setConfirmingDelete(true)}
-                  className="text-left px-2.5 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 cursor-pointer transition-colors"
+                  className="text-left px-5 py-3 text-xs font-semibold text-red-500 hover:bg-red-50 cursor-pointer transition-colors"
                 >
                   Изтрий коментар
                 </button>
               ) : (
-                <div className="px-2.5 py-1.5 flex flex-col gap-1">
+                <div className="px-5 py-3 flex flex-col gap-2">
                   <span className="text-[11px] text-gray-500">Сигурни ли сте?</span>
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-3">
                     <button
                       type="button"
                       onClick={() => {
@@ -139,14 +139,14 @@ export default function CommentMenu({
                         setOpen(false);
                         setConfirmingDelete(false);
                       }}
-                      className="flex-1 text-[11px] font-bold text-white bg-red-500 hover:bg-red-600 rounded px-2 py-1 cursor-pointer transition-colors"
+                      className="flex-1 text-[11px] font-bold text-on-berry bg-red-700 hover:bg-red-800 rounded px-4 py-2 cursor-pointer transition-colors"
                     >
                       Изтрий
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirmingDelete(false)}
-                      className="flex-1 text-[11px] font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded px-2 py-1 cursor-pointer transition-colors"
+                      className="flex-1 text-[11px] font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded px-4 py-2 cursor-pointer transition-colors"
                     >
                       Отказ
                     </button>

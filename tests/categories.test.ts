@@ -3,6 +3,7 @@ import {
   getCategoryLabel,
   isCategory,
   listCategories,
+  listCategorySections,
   listCategoryTree,
 } from "@/lib/categories";
 
@@ -62,5 +63,18 @@ describe("Categories", () => {
     expect(isCategory("/golf-clubs")).toBe(false);
     expect(isCategory("toString")).toBe(false);
     expect(getCategoryLabel("nonexistent")).toBeUndefined();
+  });
+
+  it("lays Categories out in sections: Venues' Categories under their heading, then the rest under Още категории", () => {
+    const sections = listCategorySections().map((s) => ({
+      heading: s.heading,
+      isGroup: s.isGroup,
+      categories: s.categories.map((c) => c.slug),
+    }));
+
+    expect(sections).toEqual([
+      { heading: "Обекти", isGroup: true, categories: VENUE_CATEGORIES },
+      { heading: "Още категории", isGroup: false, categories: STANDALONE_CATEGORIES },
+    ]);
   });
 });

@@ -11,15 +11,15 @@ export default function AlertBanner({ type = "warning", children, onClose }: Ale
 
   return (
     <div
-      className={`mb-1 p-1.5 border text-sm md:text-base rounded-md shadow-sm flex items-center justify-between gap-1 ${colorStyles[type]}`}
+      className={`mb-2 p-3 border text-sm md:text-base rounded-md shadow-sm flex items-center justify-between gap-2 ${colorStyles[type]}`}
     >
-      <div className="flex flex-1 items-center justify-center gap-2 text-center">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-4 text-center">{children}</div>
 
       {/* Conditionally render the close button if onClose is provided */}
       {onClose && (
         <button
           onClick={onClose}
-          className="px-2 font-bold opacity-60 hover:opacity-100 transition-opacity cursor-pointer leading-none"
+          className="px-4 font-bold opacity-60 hover:opacity-100 transition-opacity cursor-pointer leading-none"
           title="Затвори"
           type="button"
         >

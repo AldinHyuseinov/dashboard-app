@@ -56,6 +56,32 @@ export function listCategoryTree(): readonly CategoryTreeItem[] {
   return CATEGORY_TREE;
 }
 
+/** A heading over a run of Categories, as navigation and pickers lay them out. */
+export type CategorySection = {
+  readonly heading: string;
+  /** Whether the heading is a Category Group's (Venues), not just a label for the rest. */
+  readonly isGroup: boolean;
+  readonly categories: readonly Category[];
+};
+
+const CATEGORY_SECTIONS: readonly CategorySection[] = [
+  ...CATEGORY_TREE.flatMap((item) =>
+    item.kind === "group"
+      ? [{ heading: item.label, isGroup: true, categories: item.categories }]
+      : [],
+  ),
+  {
+    heading: "Още категории",
+    isGroup: false,
+    categories: CATEGORY_TREE.filter((item): item is Category => item.kind === "category"),
+  },
+];
+
+/** Each Category Group's Categories under its heading, then the standalone Categories. */
+export function listCategorySections(): readonly CategorySection[] {
+  return CATEGORY_SECTIONS;
+}
+
 /** Every Category, in display order. Category Groups are not included. */
 export function listCategories(): readonly Category[] {
   return CATEGORIES;

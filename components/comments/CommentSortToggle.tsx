@@ -10,12 +10,12 @@ export default function CommentSortToggle({
   onChange: (mode: SortMode) => void;
 }) {
   return (
-    <div className="flex items-center gap-0.5 text-[12px] font-bold text-gray-500">
+    <div className="flex items-center gap-1 text-[12px] font-bold text-gray-500">
       <SortIcon />
       <button
         type="button"
         onClick={() => onChange("top")}
-        className={`px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+        className={`px-3 py-1 rounded cursor-pointer transition-colors ${
           value === "top" ? "text-gray-900" : "hover:text-gray-700"
         }`}
       >
@@ -25,7 +25,7 @@ export default function CommentSortToggle({
       <button
         type="button"
         onClick={() => onChange("newest")}
-        className={`px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+        className={`px-3 py-1 rounded cursor-pointer transition-colors ${
           value === "newest" ? "text-gray-900" : "hover:text-gray-700"
         }`}
       >

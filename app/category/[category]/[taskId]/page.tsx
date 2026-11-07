@@ -32,31 +32,31 @@ export default async function TaskDetailPage({
   const hasOtherFiles = task.files.some((f) => !f.fileType.startsWith("video/"));
 
   return (
-    <div className="flex flex-col gap-2 justify-center items-center mx-auto p-2 w-full max-w-md md:max-w-3xl overflow-x-hidden">
-      <div className="bg-white rounded-xl shadow-xl p-3 relative w-full border border-gray-100 min-w-0">
+    <div className="flex flex-col gap-4 justify-center items-center mx-auto p-4 w-full max-w-md md:max-w-3xl overflow-x-hidden">
+      <div className="bg-white rounded-xl shadow-xl p-6 relative w-full border border-gray-100 min-w-0">
         {/* Header Metadata */}
-        <div className="border-b border-gray-100 pb-2 mb-2">
-          <h1 className="text-2xl font-bold text-tertiary-brown mb-1 wrap-break-word">
+        <div className="border-b border-gray-100 pb-4 mb-4">
+          <h1 className="text-2xl font-bold text-tertiary-brown mb-2 wrap-break-word">
             {task.title}
           </h1>
           <TaskMeta task={task} />
         </div>
 
         {/* Text Description */}
-        <p className="text-sm text-gray-700 whitespace-pre-wrap wrap-break-word leading-relaxed mb-4 bg-gray-50/50 p-2 rounded-lg border border-gray-100 w-full overflow-hidden">
+        <p className="text-sm text-gray-700 whitespace-pre-wrap wrap-break-word leading-relaxed mb-8 bg-gray-50/50 p-4 rounded-lg border border-gray-100 w-full overflow-hidden">
           {task.description}
         </p>
 
         {/* Image/PDF/Video Attachment Thumbnails */}
         {task.files && task.files.length > 0 && (
-          <div className="mb-2">
+          <div className="mb-4">
             {/* 1. Video Playback Section (Inline player for immediate viewing) */}
             {hasVideos && (
-              <div className="mb-2 pb-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+              <div className="mb-4 pb-8">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
                   Видеa
                 </h3>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-6">
                   {task.files
                     .filter((f) => f.fileType.startsWith("video/"))
                     .map((file) => (
@@ -78,11 +78,11 @@ export default async function TaskDetailPage({
 
             {/* 2. Attached Files Section (Only rendered if there are actual non-video files) */}
             {hasOtherFiles && (
-              <div className="mb-2">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+              <div className="mb-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
                   Прикачени файлове
                 </h3>
-                <div className="flex justify-center flex-wrap gap-2">
+                <div className="flex justify-center flex-wrap gap-4">
                   {task.files
                     .filter((f) => !f.fileType.startsWith("video/"))
                     .map((file) => {
@@ -100,7 +100,7 @@ export default async function TaskDetailPage({
                             <img
                               src={`/api/files/${file.id}`}
                               alt={file.fileName}
-                              className="w-16 h-16 object-cover rounded-md border border-gray-200 hover:border-primary-gold transition-all hover:scale-105"
+                              className="w-32 h-32 object-cover rounded-md border border-gray-200 hover:border-primary-gold transition-all hover:scale-105"
                             />
                           ) : (
                             <PdfPreviewLarge
@@ -118,10 +118,10 @@ export default async function TaskDetailPage({
         )}
 
         {/* Actions Footer */}
-        <div className="flex gap-2 justify-end mt-1 pt-1 border-t border-gray-100">
+        <div className="flex gap-4 justify-end mt-2 pt-2 border-t border-gray-100">
           <Link
             href={`/category/${category}`}
-            className="px-2 py-2 rounded-md text-gray-600 text-sm hover:bg-gray-100 transition font-medium"
+            className="px-4 py-4 rounded-md text-gray-600 text-sm hover:bg-gray-100 transition font-medium"
           >
             Назад
           </Link>
@@ -130,7 +130,7 @@ export default async function TaskDetailPage({
           {isOwner && (
             <Link
               href={`/category/${category}/${task.id}/edit`}
-              className="px-1 py-2 bg-primary-gold hover:bg-secondary-gold-dark text-white rounded-md text-sm font-bold transition shadow-sm"
+              className="px-2 py-4 bg-primary-gold hover:brightness-95 text-on-gold rounded-md text-sm font-bold transition shadow-sm"
             >
               Редактирай
             </Link>
@@ -138,8 +138,8 @@ export default async function TaskDetailPage({
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-xl p-2 w-full border border-gray-100 min-w-0">
-        <h2 className="text-lg font-bold mb-2 text-tertiary-brown border-b border-gray-100 pb-2">
+      <div className="bg-white rounded-xl shadow-xl p-4 w-full border border-gray-100 min-w-0">
+        <h2 className="text-lg font-bold mb-4 text-tertiary-brown border-b border-gray-100 pb-4">
           Коментари
         </h2>
         <TaskCommentsSection

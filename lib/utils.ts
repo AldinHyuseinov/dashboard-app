@@ -7,3 +7,12 @@ export const formatDate = (date: Date) => {
     minute: "2-digit",
   }).format(new Date(date));
 };
+
+/** Up to two initials from a person's name, for an avatar: "Елена Стоянова" → "ЕС". */
+export const initials = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toLocaleUpperCase("bg-BG"))
+    .join("");

@@ -1,13 +1,235 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens, from the approved prototype (ticket 14). Defined once here
+ * and used through Tailwind utilities: `bg-surface`, `text-ink-2`,
+ * `border-line`, `text-display`, `rounded-card`, `p-2` (16px) and so on.
+ * Dark values follow the device setting (see the media query below).
+ */
 @theme {
+  /* Colour: bg 60%, surface 30%, gold 10%. */
+  --color-bg: #f3f2ef;
+  --color-surface: #ffffff;
+  --color-hover: #faf8f3;
+  --color-ink: #2b2216;
+  --color-ink-2: #6b5d45;
+  --color-line: #e4ded1;
+  --color-gold: #cda349;
+  --color-gold-ink: #8a6a1f;
+  --color-on-gold: #2b2216;
+  --color-bar: #cda349;
+  --color-bar-ink: #2b2216;
+  --color-bar-line: #b8913c;
+  --color-side-eyebrow: #4a3b22;
+  --color-side-active: rgb(255 255 255 / 0.42);
+  --color-side-new: #2b2216;
+  --color-on-side-new: #f3e3b8;
+  /* The berry dot: Unread only, the one red in the UI. */
+  --color-berry: #b0182b;
+  --color-on-berry: #ffffff;
+  --color-vine: #4f6b2e;
+  --color-vine-tint: #e7eedb;
+  --color-tint: #f4ebd3;
+  --color-error: #a3242f;
+
+  /* Typefaces: Unbounded for screen titles only, Montserrat for everything else. */
+  --font-display: var(--font-unbounded), sans-serif;
+  --font-sans: var(--font-montserrat), system-ui, sans-serif;
+
+  /* Type scale: minor third, base 16, line height 1.5. */
+  --text-display-lg: 2.07375rem; /* 33.18: desktop screen title */
+  --text-display-lg--line-height: 1.5;
+  --text-display: 1.728125rem; /* 27.65: phone screen title */
+  --text-display--line-height: 1.5;
+  --text-display-sm: 1.44rem; /* 23.04: phone Task title */
+  --text-display-sm--line-height: 1.5;
+  --text-section: 1.2rem; /* 19.2 */
+  --text-section--line-height: 1.5;
+  --text-body: 1rem; /* 16 */
+  --text-body--line-height: 1.5;
+  --text-secondary: 0.875rem; /* 14 */
+  --text-secondary--line-height: 1.5;
+  --text-meta: 0.833125rem; /* 13.33 */
+  --text-meta--line-height: 1.5;
+  --text-label: 0.75rem; /* 12: uppercase labels (+1px tracking) and nav labels */
+  --text-label--line-height: 1.5;
+
+  /* Space: an 8px grid, so p-1 = 8, p-2 = 16, p-3 = 24, p-4 = 32, p-6 = 48, p-8 = 64. */
+  --spacing: 0.5rem;
+  --spacing-touch: 44px; /* the smallest touch target */
+
+  /* Shape: tiles and inputs, lists and cards. Buttons and chips are rounded-full. */
+  --radius-tile: 12px;
+  --radius-card: 16px;
+
+  /* Kept for screens not yet redesigned (tickets 16-18). */
   --color-primary-gold: #cda349;
   --color-secondary-gold-dark: #a38036;
   --color-tertiary-brown: #4a3b22;
-
-  --spacing: 1em;
 }
 
-.btn-header {
-  @apply bg-primary-gold hover:bg-secondary-gold-dark p-1 rounded-md font-bold text-sm transition-all cursor-pointer;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #14110c;
+    --color-surface: #1e1912;
+    --color-hover: #251f17;
+    --color-ink: #f2ecdf;
+    --color-ink-2: #bcaf97;
+    --color-line: #352c20;
+    --color-gold: #d4ae55;
+    --color-gold-ink: #e2c27a;
+    --color-on-gold: #1b160f;
+    --color-bar: #1e1912;
+    --color-bar-ink: #f2ecdf;
+    --color-bar-line: #352c20;
+    --color-side-eyebrow: #bcaf97;
+    --color-side-active: #2c2419;
+    --color-side-new: #d4ae55;
+    --color-on-side-new: #1b160f;
+    --color-berry: #c42b40;
+    --color-vine: #9bbe68;
+    --color-vine-tint: #25301a;
+    --color-tint: #33291a;
+    --color-error: #f08a8f;
+
+    /*
+     * Bridge for screens not yet redesigned (tickets 16-18): they paint with
+     * white and grey, so in dark appearance those turn into the dark tokens
+     * and stay readable. Remove once every screen uses the tokens above.
+     */
+    --color-white: var(--color-surface);
+    --color-gray-50: #221c14;
+    --color-gray-100: #2a2319;
+    --color-gray-200: var(--color-line);
+    --color-gray-300: #4a3f2f;
+    --color-gray-400: #958871;
+    --color-gray-500: #a39780;
+    --color-gray-600: var(--color-ink-2);
+    --color-gray-700: #d6ccb9;
+    --color-gray-800: var(--color-ink);
+    --color-gray-900: #faf6ee;
+    --color-tertiary-brown: var(--color-ink);
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-ink);
+    outline-offset: 2px;
+  }
+
+  /* On the gold bar, gold focus rings vanish: use the bar's ink instead. */
+  .on-bar :focus-visible {
+    outline-color: var(--color-bar-ink);
+  }
+}
+
+/*
+ * iOS zooms the page when a focused field's text is under 16px. Unlayered, so
+ * it wins over any text size utility on a field.
+ */
+input,
+select,
+textarea {
+  font-size: max(16px, 1em);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Primary action: gold, fully rounded, with button tracking. */
+@utility btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--spacing) * 1);
+  min-height: var(--spacing-touch);
+  padding-inline: calc(var(--spacing) * 3);
+  border-radius: calc(infinity * 1px);
+  background-color: var(--color-gold);
+  color: var(--color-on-gold);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  &:hover {
+    filter: brightness(0.95);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+/* Secondary action: outlined, fully rounded. */
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--spacing) * 1);
+  min-height: var(--spacing-touch);
+  padding-inline: calc(var(--spacing) * 2);
+  border: 1px solid var(--color-line);
+  border-radius: calc(infinity * 1px);
+  color: var(--color-ink);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  &:hover {
+    background-color: var(--color-hover);
+  }
+}
+
+/* Screen title: Unbounded 300, -1px tracking. */
+@utility screen-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: -1px;
+  font-size: var(--text-display);
+  line-height: 1.5;
+  @media (width >= 64rem) {
+    font-size: var(--text-display-lg);
+  }
+}
+
+/* Uppercase label: 12px at +1px tracking. */
+@utility eyebrow {
+  font-size: var(--text-label);
+  line-height: 1.5;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Space for the notch, the rounded corners and the home bar. */
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+@utility safe-x {
+  padding-left: max(calc(var(--spacing) * 2), env(safe-area-inset-left));
+  padding-right: max(calc(var(--spacing) * 2), env(safe-area-inset-right));
+}
+@utility safe-bottom {
+  padding-bottom: max(calc(var(--spacing) * 1), env(safe-area-inset-bottom));
 }

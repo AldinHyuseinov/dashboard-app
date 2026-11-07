@@ -139,19 +139,19 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
   }
 
   return (
-    <div className="flex flex-wrap items-start justify-center w-full p-4 gap-1 pt-2">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-30 p-2">
-        <h2 className="text-xl font-bold mb-1 text-tertiary-brown">
+    <div className="flex flex-wrap items-start justify-center w-full p-8 gap-2 pt-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-60 p-4">
+        <h2 className="text-xl font-bold mb-2 text-tertiary-brown">
           {existingTask ? "Публикация" : "Добавяне на задача"}
         </h2>
 
         {state.errors?.form && (
-          <div className="mb-4 p-2 bg-red-100 text-red-600 rounded-md text-sm font-medium">
+          <div className="mb-8 p-4 bg-red-100 text-red-600 rounded-md text-sm font-medium">
             {state.errors.form}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-1">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
           <input type="hidden" name="category" value={category} />
           {existingTask && <input type="hidden" name="taskId" value={existingTask.id} />}
 
@@ -160,22 +160,22 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
           ))}
 
           <div>
-            <label htmlFor="title" className="block text-sm font-bold text-gray-700 mb-1">
+            <label htmlFor="title" className="block text-sm font-bold text-gray-700 mb-2">
               Заглавие *
             </label>
             <input
               id="title"
               name="title"
               defaultValue={state.inputs?.title ?? existingTask?.title ?? ""}
-              className={`w-full border border-gray-300 rounded-md p-1 outline-none transition-colors ${state.errors?.title ? "border-red-500" : "focus:ring-primary-gold focus:border-primary-gold"}`}
+              className={`w-full border border-gray-300 rounded-md p-2 transition-colors ${state.errors?.title ? "border-red-500" : "focus:ring-primary-gold focus:border-primary-gold"}`}
             />
             {state.errors?.title && (
-              <p className="text-xs text-red-500 mt-1">{state.errors.title[0]}</p>
+              <p className="text-xs text-red-500 mt-2">{state.errors.title[0]}</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-bold text-gray-700 mb-1">
+            <label htmlFor="description" className="block text-sm font-bold text-gray-700 mb-2">
               Описание *
             </label>
             <textarea
@@ -183,15 +183,15 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
               name="description"
               rows={4}
               defaultValue={state.inputs?.description ?? existingTask?.description ?? ""}
-              className={`w-full border border-gray-300 rounded-md p-1 outline-none transition-colors ${state.errors?.description ? "border-red-500" : "focus:ring-primary-gold focus:border-primary-gold"}`}
+              className={`w-full border border-gray-300 rounded-md p-2 transition-colors ${state.errors?.description ? "border-red-500" : "focus:ring-primary-gold focus:border-primary-gold"}`}
             />
             {state.errors?.description && (
-              <p className="text-xs text-red-500 mt-1">{state.errors.description[0]}</p>
+              <p className="text-xs text-red-500 mt-2">{state.errors.description[0]}</p>
             )}
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex justify-between items-center mb-2">
               <label htmlFor="files" className="text-sm font-bold text-gray-700">
                 Прикачени файлове
               </label>
@@ -211,37 +211,37 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
                 multiple
                 accept="image/*,.pdf"
                 onChange={handleFileChange}
-                className="text-sm text-gray-500 file:mr-4 file:p-1 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-primary-gold hover:file:bg-yellow-100 cursor-pointer w-full border rounded-md mb-2"
+                className="text-sm text-gray-500 file:mr-8 file:p-2 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-primary-gold hover:file:bg-yellow-100 cursor-pointer w-full border rounded-md mb-4"
               />
             ) : (
-              <div className="p-2 border rounded-md bg-gray-50 text-gray-500 text-xs italic text-center mb-2">
+              <div className="p-4 border rounded-md bg-gray-50 text-gray-500 text-xs italic text-center mb-4">
                 Лимитът от {MAX_FILES} файла е достигнат.
               </div>
             )}
 
             {isOverLimit && (
-              <p className="text-xs text-red-500 mb-2 font-bold">
+              <p className="text-xs text-red-500 mb-4 font-bold">
                 Не можете да добавяте повече от {MAX_FILES} файла.
               </p>
             )}
 
             {/* Display processing status */}
             {uploadProgress && (
-              <p className="text-xs text-primary-gold font-bold animate-pulse mb-2 italic">
+              <p className="text-xs text-primary-gold font-bold animate-pulse mb-4 italic">
                 {uploadProgress}
               </p>
             )}
 
             {state.errors?.files && (
-              <p className="text-xs text-red-500 mt-1">{state.errors.files[0]}</p>
+              <p className="text-xs text-red-500 mt-2">{state.errors.files[0]}</p>
             )}
           </div>
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-4 justify-end">
             <button
               type="button"
               onClick={() => router.push(`/category/${category}`)}
-              className="px-1 rounded-md text-gray-600 text-sm hover:bg-gray-100 cursor-pointer font-medium"
+              className="px-2 rounded-md text-gray-600 text-sm hover:bg-gray-100 cursor-pointer font-medium"
             >
               Отказ
             </button>
@@ -255,14 +255,14 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
       </div>
 
       <div
-        className={`${visibleExistingFiles.length > 0 || selectedFiles.length > 0 ? "flex flex-col gap-2" : "hidden"} w-full max-w-30`}
+        className={`${visibleExistingFiles.length > 0 || selectedFiles.length > 0 ? "flex flex-col gap-4" : "hidden"} w-full max-w-60`}
       >
         {visibleExistingFiles.length > 0 && (
-          <div className="p-1 bg-white rounded-xl shadow-2xl">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+          <div className="p-2 bg-white rounded-xl shadow-2xl">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
               Вече запазени
             </h3>
-            <div className="flex flex-wrap justify-center gap-1 ">
+            <div className="flex flex-wrap justify-center gap-2 ">
               {visibleExistingFiles.map((file) => (
                 <ExistingFilePreview
                   key={file.id}
@@ -275,11 +275,11 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
         )}
 
         {selectedFiles.length > 0 && (
-          <div className="p-1 bg-white rounded-xl shadow-2xl">
-            <h3 className="text-xs font-bold text-primary-gold uppercase tracking-wider mb-2">
+          <div className="p-2 bg-white rounded-xl shadow-2xl">
+            <h3 className="text-xs font-bold text-primary-gold uppercase tracking-wider mb-4">
               Нови за качване
             </h3>
-            <div className="flex flex-wrap justify-center gap-1 bg-yellow-50 rounded-md p-0.5">
+            <div className="flex flex-wrap justify-center gap-2 bg-yellow-50 rounded-md p-1">
               {selectedFiles.map((sf, i) => (
                 <LocalFilePreview
                   key={i}

@@ -46,8 +46,8 @@ export default function CommentInput({
   };
 
   const isSmall = size === "sm";
-  const paddingClass = isSmall ? "p-1.5" : "p-2";
-  const textStyles = "text-xs font-sans leading-relaxed break-words whitespace-pre-wrap";
+  const paddingClass = isSmall ? "p-3" : "p-4";
+  const textStyles = "text-base font-sans leading-relaxed break-words whitespace-pre-wrap";
 
   const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const target = e.currentTarget;
@@ -87,7 +87,7 @@ export default function CommentInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col sm:flex-row gap-1 min-w-0 w-full items-end sm:items-center"
+      className="flex flex-col sm:flex-row gap-2 min-w-0 w-full items-end sm:items-center"
     >
       <div className="relative flex-1 min-w-0 w-full">
         {/* BACKDROP */}
@@ -112,7 +112,7 @@ export default function CommentInput({
           required
           rows={1}
           autoComplete="off"
-          className={`relative z-10 w-full border border-gray-300 rounded outline-none focus:ring-1 focus:ring-primary-gold focus:border-primary-gold bg-transparent text-transparent caret-gray-800 placeholder:text-gray-400 resize-none max-h-32 ${paddingClass} ${textStyles} ${
+          className={`relative z-10 w-full border border-gray-300 rounded focus:ring-1 focus:ring-primary-gold focus:border-primary-gold bg-transparent text-transparent caret-gray-800 placeholder:text-gray-400 resize-none max-h-64 ${paddingClass} ${textStyles} ${
             isScrollable ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
         />
@@ -121,8 +121,8 @@ export default function CommentInput({
       <button
         type="submit"
         disabled={isPending}
-        className={` bg-primary-gold hover:bg-secondary-gold-dark text-white font-bold rounded cursor-pointer transition-colors disabled:bg-gray-400 shrink-0 whitespace-nowrap self-end sm:self-center z-10 ${
-          isSmall ? "text-[10px] px-2.5 py-1.5" : "text-xs px-3 py-1.5"
+        className={` bg-primary-gold hover:brightness-95 text-on-gold font-bold rounded cursor-pointer transition-colors disabled:bg-gray-400 shrink-0 whitespace-nowrap self-end sm:self-center z-10 ${
+          isSmall ? "text-[10px] px-5 py-3" : "text-xs px-6 py-3"
         }`}
       >
         {isPending ? "..." : "Изпрати"}

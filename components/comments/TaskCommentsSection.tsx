@@ -318,8 +318,8 @@ export default function TaskCommentsSection({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-1 items-center justify-between">
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-2 items-center justify-between">
         <span className="text-sm font-bold text-gray-800">
           {comments.length} {comments.length === 1 ? "коментар" : "коментара"}
         </span>
@@ -327,13 +327,13 @@ export default function TaskCommentsSection({
       </div>
 
       {/* Comment Feed */}
-      <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto">
+      <div className="flex flex-col gap-6 max-h-[50vh] overflow-y-auto">
         {threads.map((thread, position) => (
           <div
             key={thread.topLevel.id}
             data-comment-position={position}
             data-comment-id={thread.topLevel.id}
-            className="border-b border-gray-100 pb-2 last:border-0 last:pb-0"
+            className="border-b border-gray-100 pb-4 last:border-0 last:pb-0"
           >
             <CommentThread
               topLevel={thread.topLevel}
@@ -351,14 +351,14 @@ export default function TaskCommentsSection({
         ))}
 
         {threads.length === 0 && (
-          <p className="text-xs text-gray-400 italic text-center py-6">
+          <p className="text-xs text-gray-400 italic text-center py-12">
             Все още няма коментари към тази задача.
           </p>
         )}
       </div>
 
       {/* Top-Level Comment Form */}
-      <div className="mt-2 pt-3 border-t border-gray-100">
+      <div className="mt-4 pt-6 border-t border-gray-100">
         <CommentInput onSubmit={handleNewComment} isPending={isPending} />
       </div>
     </div>

@@ -1,18 +1,36 @@
-import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Montserrat, Unbounded } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
+import AppShell from "@/components/shell/AppShell";
 
 const montserrat = Montserrat({
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-montserrat",
+});
+
+/** Screen titles only: wide letters that echo the AVEXIM wordmark. */
+const unbounded = Unbounded({
+  subsets: ["latin", "cyrillic"],
+  weight: ["300"],
+  variable: "--font-unbounded",
 });
 
 export const metadata: Metadata = {
   title: "Avexim Communication",
   description: "A management/communication app",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Draw under the notch and home bar; the shell pads its bars clear of them.
+  viewportFit: "cover",
+  // The browser and status bar take the top bar's colour.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#cda349" },
+    { media: "(prefers-color-scheme: dark)", color: "#1e1912" },
+  ],
 };
 
 export default function RootLayout({
@@ -21,12 +39,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${montserrat.className}`}>
-      <body className="flex flex-col items-center min-h-screen">
-        <Header />
-        <Navigation />
-        {children}
-        <Footer />
+    <html lang="bg" className={`${montserrat.variable} ${unbounded.variable}`}>
+      <body className="font-sans">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

@@ -21,7 +21,7 @@ export const ExistingFilePreview = ({
           e.preventDefault();
           onRemove(file.id);
         }}
-        className="absolute top-0 left-0 -translate-x-1 -translate-y-1 z-20 w-2 h-2 cursor-pointer text-xs font-bold text-red-500 p-1"
+        className="absolute top-0 left-0 -translate-x-2 -translate-y-2 z-20 w-4 h-4 cursor-pointer text-xs font-bold text-red-500 p-2"
         title="Премахни"
       >
         ✕
@@ -68,7 +68,7 @@ export const LocalFilePreview = ({
           e.preventDefault();
           onRemove();
         }}
-        className="absolute top-0 left-0 -translate-x-1 -translate-y-1 z-20 w-2 h-2 cursor-pointer text-xs font-bold text-red-500 p-1"
+        className="absolute top-0 left-0 -translate-x-2 -translate-y-2 z-20 w-4 h-4 cursor-pointer text-xs font-bold text-red-500 p-2"
         title="Откажи"
       >
         ✕
@@ -104,9 +104,9 @@ export const LocalFilePreview = ({
 
 const PdfPreview = (props: { fileName: string }) => {
   return (
-    <div className="flex items-center justify-center p-1 text-center min-w-15 cursor-pointer">
+    <div className="flex items-center justify-center p-2 text-center min-w-30 cursor-pointer">
       <span className="text-2xl">📄</span>
-      <span className="text-[10px] text-gray-600 px-1">{props.fileName}</span>
+      <span className="text-[10px] text-gray-600 px-2">{props.fileName}</span>
     </div>
   );
 };
@@ -114,18 +114,18 @@ const PdfPreview = (props: { fileName: string }) => {
 export const PdfPreviewLarge = (props: { fileName: string; styleCondition: boolean }) => {
   return (
     <div
-      className={`w-16 h-16 border rounded-md flex flex-col items-center justify-between p-1 bg-red-50/30 transition-all select-none ${
+      className={`w-32 h-32 border rounded-md flex flex-col items-center justify-between p-2 bg-red-50/30 transition-all select-none ${
         props.styleCondition
           ? "border-gray-200 opacity-50 grayscale"
           : "border-gray-200 hover:border-red-500 hover:scale-105"
       }`}
     >
-      <span className="bg-red-600 text-white font-black text-[8px] px-1 rounded-sm uppercase tracking-wider leading-normal">
+      <span className="bg-red-700 text-on-berry font-black text-[8px] px-2 rounded-sm uppercase tracking-wider leading-normal">
         PDF
       </span>
       <span className="text-5xl leading-none">📄</span>
       <span
-        className={`text-[16px] font-medium truncate w-full text-center px-0.5 ${props.styleCondition ? "text-gray-400" : "text-gray-500"}`}
+        className={`text-[16px] font-medium truncate w-full text-center px-1 ${props.styleCondition ? "text-gray-400" : "text-gray-500"}`}
       >
         {props.fileName}
       </span>

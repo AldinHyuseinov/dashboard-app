@@ -31,10 +31,10 @@ function FeedItemContent({ item }: { item: FeedItem }) {
           „{item.comment.excerpt}“
         </p>
       )}
-      <p className="mt-1 text-xs text-gray-400">
+      <p className="mt-2 text-xs text-gray-400">
         <span className="font-bold text-primary-gold">{item.task.categoryLabel}</span> ·{" "}
         {formatDate(item.occurredAt)}
-        {item.task.deleted && <span className="ml-1 font-bold text-red-500">· Задачата е изтрита</span>}
+        {item.task.deleted && <span className="ml-2 font-bold text-red-500">· Задачата е изтрита</span>}
       </p>
     </>
   );
@@ -47,17 +47,17 @@ export default function ActivityFeed({ items }: { items: FeedItem[] }) {
   }
 
   return (
-    <ul className="flex flex-col gap-1">
+    <ul className="flex flex-col gap-2">
       {items.map((item) => (
         <li key={item.id}>
           {item.task.deleted ? (
-            <div className="block p-2 rounded-lg border bg-gray-50 border-gray-200 shadow-sm">
+            <div className="block p-4 rounded-lg border bg-gray-50 border-gray-200 shadow-sm">
               <FeedItemContent item={item} />
             </div>
           ) : (
             <Link
               href={`/category/${item.task.category}/${item.task.id}`}
-              className="block p-2 rounded-lg border bg-white border-secondary-gold-dark shadow-sm transition-all hover:border-primary-gold hover:shadow-lg"
+              className="block p-4 rounded-lg border bg-white border-secondary-gold-dark shadow-sm transition-all hover:border-primary-gold hover:shadow-lg"
             >
               <FeedItemContent item={item} />
             </Link>
