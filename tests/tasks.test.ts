@@ -263,14 +263,16 @@ describe("Tasks", () => {
       expect(await tasks.get(ivan, id)).toMatchObject({ isDone: false });
     });
 
-    it("sends no email, as today", async () => {
+    it("emails the Task Owner when someone else marks it", async () => {
       const ivan = await createUser("Ivan");
       const maria = await createUser("Maria");
+      await createUser("Georgi");
       const { id } = await postTask(ivan);
 
       await tasks.setDone(maria, { taskId: id, isDone: true, now: MONDAY_10AM });
 
-      expect(emails.sent).toEqual([]);
+      expect(emails.sent).toHaveLength(1);
+      expect(emails.sent[0].to).toEqual(["ivan@avexim.test"]);
     });
 
     it("reports a Task that no longer exists", async () => {

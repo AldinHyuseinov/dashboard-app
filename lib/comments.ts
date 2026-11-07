@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
 import { REACTION_EMOJIS } from "@/lib/constants";
-import { notifyComment, type createNotifications } from "@/lib/notifications";
-import type { CommentInteractionType } from "@/lib/types";
+import {
+  notifications as defaultNotifications,
+  type Notifications,
+} from "@/lib/notifications";
 
 /** The Comment a rule applied to, with its Task's id and Category for refreshing pages. */
 export type CommentResult =
@@ -10,7 +12,7 @@ export type CommentResult =
   | { ok: false; error: string };
 
 export type CommentDeps = {
-  notifications: Pick<ReturnType<typeof createNotifications>, "notifyComment">;
+  notifications: Pick<Notifications, "notify">;
 };
 
 const EMPTY_TEXT = "Коментарът не може да бъде празен.";
@@ -29,28 +31,6 @@ const REPLIES_ARE_NOT_PINNED = "Отговорите не могат да бъд
  */
 export function createComments({ notifications }: CommentDeps) {
   /**
-   * Emails about a Comment, Reply or Reaction. Sending already logs its own
-   * failures; this also keeps a failed recipient lookup from failing a saved change.
-   */
-  async function announce(
-    actor: Actor,
-    type: CommentInteractionType,
-    task: { title: string; category: string },
-  ) {
-    try {
-      await notifications.notifyComment({
-        actorId: actor.id,
-        actorName: actor.name,
-        taskTitle: task.title,
-        category: task.category,
-        type,
-      });
-    } catch (err) {
-      console.error("Comment notification failed:", err);
-    }
-  }
-
-  /**
    * Posts a Comment on a Task, or a Reply when `replyToId` names the Comment
    * being answered, which the Reply records. Threads are one level deep: a
    * Reply to a Reply is filed under the thread's top-level Comment.
@@ -64,29 +44,38 @@ export function createComments({ notifications }: CommentDeps) {
 
     const task = await prisma.task.findUnique({
       where: { id: input.taskId },
-      select: { id: true, title: true, category: true },
+      select: { id: true, title: true, category: true, userId: true },
     });
     if (!task) return { ok: false, error: TASK_NOT_FOUND };
 
-    let parentId: string | null = null;
-    let answersId: string | null = null;
-    if (input.replyToId) {
-      const answered = await prisma.comment.findUnique({
-        where: { id: input.replyToId },
-        select: { id: true, taskId: true, parentId: true },
-      });
-      if (!answered) return { ok: false, error: COMMENT_NOT_FOUND };
-      if (answered.taskId !== task.id) return { ok: false, error: REPLY_ON_ANOTHER_TASK };
-      parentId = answered.parentId ?? answered.id;
-      answersId = answered.id;
-    }
+    const answered = input.replyToId
+      ? await prisma.comment.findUnique({
+          where: { id: input.replyToId },
+          select: { id: true, taskId: true, parentId: true, userId: true },
+        })
+      : null;
+    if (input.replyToId && !answered) return { ok: false, error: COMMENT_NOT_FOUND };
+    if (answered && answered.taskId !== task.id) return { ok: false, error: REPLY_ON_ANOTHER_TASK };
+    const parentId = answered ? (answered.parentId ?? answered.id) : null;
 
     const comment = await prisma.comment.create({
-      data: { text, taskId: task.id, userId: actor.id, parentId, answersId, createdAt: input.now },
+      data: {
+        text,
+        taskId: task.id,
+        userId: actor.id,
+        parentId,
+        answersId: answered?.id ?? null,
+        createdAt: input.now,
+      },
       select: { id: true },
     });
 
-    await announce(actor, parentId ? "reply" : "comment", task);
+    await notifications.notify(
+      actor,
+      answered
+        ? { type: "reply-posted", task, answeredAuthorId: answered.userId }
+        : { type: "comment-posted", task },
+    );
     return { ok: true, comment: { id: comment.id, taskId: task.id, category: task.category } };
   }
 
@@ -168,7 +157,11 @@ export function createComments({ notifications }: CommentDeps) {
       await prisma.reaction.delete({ where: { id: existing.id } });
     } else {
       await prisma.reaction.create({ data: key });
-      await announce(actor, "reaction", comment.task);
+      await notifications.notify(actor, {
+        type: "reaction-added",
+        task: comment.task,
+        commentAuthorId: comment.userId,
+      });
     }
     return { ok: true, comment: comment.ref };
   }
@@ -215,4 +208,4 @@ export function createComments({ notifications }: CommentDeps) {
   return { post, edit, delete: remove, pin, react, list };
 }
 
-export const comments = createComments({ notifications: { notifyComment } });
+export const comments = createComments({ notifications: defaultNotifications });

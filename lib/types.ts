@@ -166,24 +166,6 @@ export type CommentThreadData = {
 
 export type SortMode = "top" | "newest";
 
-export type CommentInteractionType = "comment" | "reply" | "reaction";
-
-export const INTERACTION_COPY: Record<CommentInteractionType, { subjectVerb: string; bodyVerb: string }> =
-  {
-    comment: {
-      subjectVerb: "Нов коментар",
-      bodyVerb: "написа нов коментар по задача",
-    },
-    reply: {
-      subjectVerb: "Нов отговор",
-      bodyVerb: "отговори на коментар по задача",
-    },
-    reaction: {
-      subjectVerb: "Нова реакция",
-      bodyVerb: "реагира на коментар по задача",
-    },
-  };
-
 export type TaskFormState = {
   errors?: {
     title?: string[];

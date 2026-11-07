@@ -4,7 +4,10 @@ import type { Actor } from "@/lib/actor";
 import { isCategory } from "@/lib/categories";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { changeTaskFiles, TaskFilesRefused } from "@/lib/files";
-import { notifyTaskChange, type createNotifications } from "@/lib/notifications";
+import {
+  notifications as defaultNotifications,
+  type Notifications,
+} from "@/lib/notifications";
 import type { TaskFormState } from "@/lib/types";
 
 /** Errors to show next to the Task form's fields, or above the whole form. */
@@ -16,7 +19,7 @@ export type TaskResult =
   | { ok: false; errors: TaskErrors };
 
 export type TaskDeps = {
-  notifications: Pick<ReturnType<typeof createNotifications>, "notifyTaskChange">;
+  notifications: Pick<Notifications, "notify">;
 };
 
 const taskTextSchema = z.object({
@@ -50,18 +53,6 @@ const TASK_DETAILS = {
  * the default instance exported below; tests inject in-memory adapters.
  */
 export function createTasks({ notifications }: TaskDeps) {
-  /**
-   * Emails everyone but the Actor. Sending already logs its own failures;
-   * this also keeps a failed recipient lookup from failing a saved change.
-   */
-  async function announce(actor: Actor, action: string, category: string) {
-    try {
-      await notifications.notifyTaskChange({ actorId: actor.id, action, category });
-    } catch (err) {
-      console.error("Task notification failed:", err);
-    }
-  }
-
   /**
    * The Task, if it exists and the Actor is its Task Owner; otherwise the
    * refusal, with `notOwner` as the message for someone else's Task.
@@ -110,7 +101,7 @@ export function createTasks({ notifications }: TaskDeps) {
       return saveFailure(error, "Task create failed:");
     }
 
-    await announce(actor, "Създадена нова", task.category);
+    await notifications.notify(actor, { type: "task-created", category: task.category });
     return { ok: true, task };
   }
 
@@ -158,7 +149,7 @@ export function createTasks({ notifications }: TaskDeps) {
       return saveFailure(error, "Task edit failed:");
     }
 
-    await announce(actor, "Обновена", task.category);
+    await notifications.notify(actor, { type: "task-edited", category: task.category });
     return { ok: true, task };
   }
 
@@ -173,23 +164,31 @@ export function createTasks({ notifications }: TaskDeps) {
     await prisma.task.delete({ where: { id: taskId } });
 
     const { id, category } = owned.task;
-    await announce(actor, "Изтрита", category);
+    await notifications.notify(actor, { type: "task-deleted", category });
     return { ok: true, task: { id, category } };
   }
 
-  /** Marks a Task Done or not Done. Any user may do this, not only the Task Owner. */
+  /**
+   * Marks a Task Done or not Done. Any user may do this, not only the Task
+   * Owner, who is told when someone else does. Marking a Task with the
+   * status it already has changes nothing.
+   */
   async function setDone(
     actor: Actor,
     { taskId, isDone, now }: { taskId: string; isDone: boolean; now: Date },
   ): Promise<TaskResult> {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
-      select: { id: true, category: true },
+      select: { id: true, title: true, category: true, userId: true, isDone: true },
     });
     if (!task) return { ok: false, errors: { form: TASK_NOT_FOUND } };
 
+    const result = { ok: true as const, task: { id: task.id, category: task.category } };
+    if (task.isDone === isDone) return result;
+
     await prisma.task.update({ where: { id: taskId }, data: { isDone, updatedAt: now } });
-    return { ok: true, task };
+    await notifications.notify(actor, { type: isDone ? "task-done" : "task-not-done", task });
+    return result;
   }
 
   /** One Task with its owner's name and its files' metadata, or `null`. */
@@ -219,4 +218,4 @@ export function createTasks({ notifications }: TaskDeps) {
   return { create, edit, delete: remove, setDone, get, list };
 }
 
-export const tasks = createTasks({ notifications: { notifyTaskChange } });
+export const tasks = createTasks({ notifications: defaultNotifications });

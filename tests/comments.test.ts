@@ -107,7 +107,7 @@ describe("Comments", () => {
   });
 
   describe("posting a Reply", () => {
-    it("Ivan replies to Maria's Comment; the Reply is filed under it and everyone else is emailed", async () => {
+    it("Ivan replies to Maria's Comment; the Reply is filed under it and Maria is emailed", async () => {
       const ivan = await createUser("Ivan");
       const maria = await createUser("Maria");
       await createUser("Georgi");
@@ -125,7 +125,7 @@ describe("Comments", () => {
       const reply = (await comments.list(ivan, task.id)).find((c) => c.text === "До петък");
       expect(reply).toMatchObject({ parentId: comment.id, answersId: comment.id, userId: ivan.id });
       expect(emails.sent).toHaveLength(1);
-      expect(emails.sent[0].to.toSorted()).toEqual(["georgi@avexim.test", "maria@avexim.test"]);
+      expect(emails.sent[0].to).toEqual(["maria@avexim.test"]);
       expect(emails.sent[0].subject).toBe("Нов отговор: Нова винена листа");
     });
 
@@ -431,7 +431,7 @@ describe("Comments", () => {
   });
 
   describe("reacting to a Comment", () => {
-    it("Maria reacts to Ivan's Comment; the Reaction shows and everyone else is emailed", async () => {
+    it("Maria reacts to Ivan's Comment; the Reaction shows and Ivan is emailed", async () => {
       const ivan = await createUser("Ivan");
       const maria = await createUser("Maria");
       await createUser("Georgi");
@@ -445,7 +445,7 @@ describe("Comments", () => {
         { reactions: [{ emoji: "👏", userId: maria.id, user: { name: "Maria" } }] },
       ]);
       expect(emails.sent).toHaveLength(1);
-      expect(emails.sent[0].to.toSorted()).toEqual(["georgi@avexim.test", "ivan@avexim.test"]);
+      expect(emails.sent[0].to).toEqual(["ivan@avexim.test"]);
       expect(emails.sent[0].subject).toBe("Нова реакция: Нова винена листа");
     });
 
