@@ -1,26 +1,23 @@
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getActor } from "@/lib/session";
+import { files } from "@/lib/files";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // Find the file in the database
-  const file = await prisma.taskFile.findUnique({
-    where: { id },
-    select: { data: true, fileType: true, fileName: true },
-  });
+  const result = await files.download(await getActor(), id);
+  if (!result.ok) {
+    return result.reason === "unauthenticated"
+      ? new NextResponse("Unauthorized", { status: 401 })
+      : new NextResponse("File not found", { status: 404 });
+  }
 
-  if (!file) return new NextResponse("File not found", { status: 404 });
-
-  // 1. Encode the filename to handle Bulgarian/Cyrillic characters safely
-  const encodedFileName = encodeURIComponent(file.fileName);
-
-  // Return the raw binary data with the correct content type
-  return new NextResponse(file.data, {
+  const { data, fileType, fileName } = result.file;
+  return new NextResponse(data, {
     headers: {
-      "Content-Type": file.fileType,
-      // 2. Use the UTF-8 filename* syntax for HTTP headers
-      "Content-Disposition": `inline; filename*=UTF-8''${encodedFileName}`,
+      "Content-Type": fileType,
+      // RFC 5987 UTF-8 filename, so Bulgarian (Cyrillic) names survive.
+      "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(fileName)}`,
     },
   });
 }

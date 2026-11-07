@@ -3,7 +3,7 @@ import { InMemoryEmailAdapter } from "@/lib/email-adapter";
 import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import type { Actor } from "@/lib/actor";
-import { createUser, uploadFile } from "./support/fixtures";
+import { createUser } from "./support/fixtures";
 
 const MONDAY_9AM = new Date("2026-11-02T09:00:00Z");
 const MONDAY_10AM = new Date("2026-11-02T10:00:00Z");
@@ -114,56 +114,6 @@ describe("Tasks", () => {
         },
       });
       expect(await tasks.list(ivan, { category: "bars", page: 1 })).toMatchObject({ tasks: [] });
-    });
-  });
-
-  describe("attaching files", () => {
-    const uploadFiles = async (count: number) =>
-      Promise.all(Array.from({ length: count }, async (_, i) => (await uploadFile(`${i}.webp`)).id));
-
-    it("a new Task takes at most 10 files", async () => {
-      const ivan = await createUser("Ivan");
-
-      const result = await tasks.create(ivan, {
-        title: "Снимки от събитието",
-        description: "Всички снимки",
-        category: "events",
-        fileIds: await uploadFiles(11),
-        now: MONDAY_9AM,
-      });
-
-      expect(result).toEqual({
-        ok: false,
-        errors: { files: ["Можете да прикачите максимум 10 файла."] },
-      });
-    });
-
-    it("an edit counts the files kept, removed and added against the limit of 10", async () => {
-      const ivan = await createUser("Ivan");
-      const existing = await uploadFiles(8);
-      const { id } = await postTask(ivan, { fileIds: existing });
-      const edit = async (addedFileIds: string[]) =>
-        tasks.edit(ivan, {
-          taskId: id,
-          title: "Нова винена листа",
-          description: "Да се обнови до петък",
-          addedFileIds,
-          removedFileIds: [existing[0]],
-          now: MONDAY_10AM,
-        });
-
-      expect(await edit(await uploadFiles(4))).toEqual({
-        ok: false,
-        errors: {
-          files: ["Тази задача вече има 7 запазени файла. Можете да добавите максимум още 3."],
-        },
-      });
-      expect((await tasks.get(ivan, id))?.files).toHaveLength(8);
-
-      expect(await edit(await uploadFiles(3))).toMatchObject({ ok: true });
-      const files = (await tasks.get(ivan, id))?.files.map((f) => f.id);
-      expect(files).toHaveLength(10);
-      expect(files).not.toContain(existing[0]);
     });
   });
 

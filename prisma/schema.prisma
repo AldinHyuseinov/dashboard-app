@@ -25,6 +25,7 @@ model User {
   tasks         Task[]
   comments      Comment[]
   reactions     Reaction[]
+  uploadedFiles TaskFile[]
 
   @@unique([email])
   @@map("user")
@@ -83,11 +84,18 @@ model TaskFile {
   taskId String?
   task   Task?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
+  // Who uploaded the file. Only they may attach it to a Task. Null only for
+  // unattached files uploaded before uploaders were recorded.
+  uploaderId String?
+  uploader   User?   @relation(fields: [uploaderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
   fileName String
   fileType String
   data     Bytes
 
   createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
 }
 
 model Comment {

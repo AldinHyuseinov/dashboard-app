@@ -2,7 +2,8 @@ import z from "zod";
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
 import { isCategory } from "@/lib/categories";
-import { ITEMS_PER_PAGE, MAX_FILES } from "@/lib/constants";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { changeTaskFiles, TaskFilesRefused } from "@/lib/files";
 import { notifyTaskChange, type createNotifications } from "@/lib/notifications";
 import type { TaskFormState } from "@/lib/types";
 
@@ -30,15 +31,13 @@ const TASK_NOT_FOUND = "Задачата не е намерена.";
 const SAVE_FAILED = "Възникна грешка при запазване.";
 
 /**
- * The 10-files-per-Task limit: files already on the Task, minus those being
- * removed, plus those being added. Returns the error to show, if any.
+ * Why a save failed: a refused file change becomes the form's file error;
+ * anything else is logged under `logLabel` and shown as a generic error.
  */
-function fileLimitError(existing: number, removed: number, added: number): string | undefined {
-  const kept = existing - removed;
-  if (kept + added <= MAX_FILES) return undefined;
-  return existing > 0
-    ? `Тази задача вече има ${kept} запазени файла. Можете да добавите максимум още ${MAX_FILES - kept}.`
-    : `Можете да прикачите максимум ${MAX_FILES} файла.`;
+function saveFailure(error: unknown, logLabel: string): TaskResult {
+  if (error instanceof TaskFilesRefused) return { ok: false, errors: { files: [error.message] } };
+  console.error(logLabel, error);
+  return { ok: false, errors: { form: SAVE_FAILED } };
 }
 
 const TASK_DETAILS = {
@@ -70,7 +69,7 @@ export function createTasks({ notifications }: TaskDeps) {
   async function findOwnTask(actor: Actor, taskId: string, notOwner: string) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
-      select: { id: true, category: true, userId: true, _count: { select: { files: true } } },
+      select: { id: true, category: true, userId: true },
     });
     if (!task) return { ok: false as const, errors: { form: TASK_NOT_FOUND } };
     if (task.userId !== actor.id) return { ok: false as const, errors: { form: notOwner } };
@@ -78,8 +77,8 @@ export function createTasks({ notifications }: TaskDeps) {
   }
 
   /**
-   * Posts a Task into a Category. `fileIds` are files already uploaded
-   * through the upload route.
+   * Posts a Task into a Category. `fileIds` are files the Actor uploaded
+   * through the Files module that aren't on any Task yet.
    */
   async function create(
     actor: Actor,
@@ -90,26 +89,25 @@ export function createTasks({ notifications }: TaskDeps) {
     const text = taskTextSchema.safeParse(input);
     if (!text.success) return { ok: false, errors: z.flattenError(text.error).fieldErrors };
 
-    const tooManyFiles = fileLimitError(0, 0, input.fileIds.length);
-    if (tooManyFiles) return { ok: false, errors: { files: [tooManyFiles] } };
-
     let task;
     try {
-      task = await prisma.task.create({
-        data: {
-          title: text.data.title,
-          description: text.data.description,
-          category: input.category,
-          createdAt: input.now,
-          updatedAt: input.now,
-          user: { connect: { id: actor.id } },
-          files: { connect: input.fileIds.map((id) => ({ id })) },
-        },
-        select: { id: true, category: true },
+      task = await prisma.$transaction(async (tx) => {
+        const created = await tx.task.create({
+          data: {
+            title: text.data.title,
+            description: text.data.description,
+            category: input.category,
+            createdAt: input.now,
+            updatedAt: input.now,
+            user: { connect: { id: actor.id } },
+          },
+          select: { id: true, category: true },
+        });
+        await changeTaskFiles(tx, actor, { taskId: created.id, addedFileIds: input.fileIds });
+        return created;
       });
     } catch (error) {
-      console.error("Task create failed:", error);
-      return { ok: false, errors: { form: SAVE_FAILED } };
+      return saveFailure(error, "Task create failed:");
     }
 
     await announce(actor, "Създадена нова", task.category);
@@ -117,8 +115,9 @@ export function createTasks({ notifications }: TaskDeps) {
   }
 
   /**
-   * Changes a Task's title and description, attaches newly uploaded files
-   * and removes some of its files. Only the Task Owner may edit a Task.
+   * Changes a Task's title and description, removes some of its files and
+   * attaches the Actor's newly uploaded ones. Only the Task Owner may edit
+   * a Task. A refused file change leaves the whole Task unchanged.
    */
   async function edit(
     actor: Actor,
@@ -137,32 +136,26 @@ export function createTasks({ notifications }: TaskDeps) {
     const text = taskTextSchema.safeParse(input);
     if (!text.success) return { ok: false, errors: z.flattenError(text.error).fieldErrors };
 
-    const tooManyFiles = fileLimitError(
-      owned.task._count.files,
-      input.removedFileIds.length,
-      input.addedFileIds.length,
-    );
-    if (tooManyFiles) return { ok: false, errors: { files: [tooManyFiles] } };
-
     let task;
     try {
-      task = await prisma.task.update({
-        where: { id: input.taskId },
-        data: {
-          title: text.data.title,
-          description: text.data.description,
-          updatedAt: input.now,
-          files: {
-            deleteMany:
-              input.removedFileIds.length > 0 ? { id: { in: input.removedFileIds } } : undefined,
-            connect: input.addedFileIds.map((id) => ({ id })),
+      task = await prisma.$transaction(async (tx) => {
+        await changeTaskFiles(tx, actor, {
+          taskId: input.taskId,
+          addedFileIds: input.addedFileIds,
+          removedFileIds: input.removedFileIds,
+        });
+        return tx.task.update({
+          where: { id: input.taskId },
+          data: {
+            title: text.data.title,
+            description: text.data.description,
+            updatedAt: input.now,
           },
-        },
-        select: { id: true, category: true },
+          select: { id: true, category: true },
+        });
       });
     } catch (error) {
-      console.error("Task edit failed:", error);
-      return { ok: false, errors: { form: SAVE_FAILED } };
+      return saveFailure(error, "Task edit failed:");
     }
 
     await announce(actor, "Обновена", task.category);
