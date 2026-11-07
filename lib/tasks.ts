@@ -1,7 +1,7 @@
 import z from "zod";
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
-import { recordActivity, recordTaskDeleted } from "@/lib/activity";
+import { recordActivity, recordTaskDeleted, recordTaskEdited } from "@/lib/activity";
 import { isCategory } from "@/lib/categories";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { changeTaskFiles, TaskFilesRefused } from "@/lib/files";
@@ -129,9 +129,9 @@ export function createTasks({ notifications }: TaskDeps) {
     const text = taskTextSchema.safeParse(input);
     if (!text.success) return { ok: false, errors: z.flattenError(text.error).fieldErrors };
 
-    let task;
+    let saved;
     try {
-      task = await prisma.$transaction(async (tx) => {
+      saved = await prisma.$transaction(async (tx) => {
         await changeTaskFiles(tx, actor, {
           taskId: input.taskId,
           addedFileIds: input.addedFileIds,
@@ -146,14 +146,15 @@ export function createTasks({ notifications }: TaskDeps) {
           },
           select: { id: true, title: true, category: true },
         });
-        await recordActivity(tx, actor, { type: "task-edited", task: edited, now: input.now });
-        return { id: edited.id, category: edited.category };
+        const { merged } = await recordTaskEdited(tx, actor, { task: edited, now: input.now });
+        return { task: { id: edited.id, category: edited.category }, merged };
       });
     } catch (error) {
       return saveFailure(error, "Task edit failed:");
     }
 
-    await notifications.notify(actor, { type: "task-edited", category: task.category });
+    const { task, merged } = saved;
+    if (!merged) await notifications.notify(actor, { type: "task-edited", category: task.category });
     return { ok: true, task };
   }
 

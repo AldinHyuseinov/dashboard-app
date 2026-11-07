@@ -2,7 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
 import { categoryLabelOrSlug } from "@/lib/categories";
-import { FEED_ITEMS_PER_PAGE } from "@/lib/constants";
+import { EDIT_MERGE_WINDOW_MS, FEED_ITEMS_PER_PAGE } from "@/lib/constants";
 
 /** What happened. Reactions are not Activities. */
 export type ActivityType =
@@ -64,6 +64,38 @@ export async function recordActivity(
       occurredAt: input.now,
     },
   });
+}
+
+/**
+ * Records that the Actor edited a Task, inside the caller's transaction.
+ * When that Task's latest "Task edited" Activity is the same Actor's and
+ * happened no more than `EDIT_MERGE_WINDOW_MS` before `now`, it is reused
+ * instead and its time moves to `now`. Since the window counts from that
+ * moved time, a run of edits each close to the last stays one Activity.
+ * `merged` tells the caller not to notify anyone a second time.
+ */
+export async function recordTaskEdited(
+  tx: Prisma.TransactionClient,
+  actor: Actor,
+  { task, now }: { task: ActivityTask; now: Date },
+): Promise<{ merged: boolean }> {
+  const latestEdit = await tx.activity.findFirst({
+    where: { taskId: task.id, type: "task-edited" },
+    orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
+    select: { id: true, actorId: true, occurredAt: true },
+  });
+
+  const mergeable =
+    latestEdit !== null &&
+    latestEdit.actorId === actor.id &&
+    now.getTime() - latestEdit.occurredAt.getTime() <= EDIT_MERGE_WINDOW_MS;
+  if (!mergeable) {
+    await recordActivity(tx, actor, { type: "task-edited", task, now });
+    return { merged: false };
+  }
+
+  await tx.activity.update({ where: { id: latestEdit.id }, data: { occurredAt: now } });
+  return { merged: true };
 }
 
 /**
