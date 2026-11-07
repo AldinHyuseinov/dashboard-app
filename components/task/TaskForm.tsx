@@ -34,22 +34,16 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
     }
   }, [state.success, category, router]);
 
+  // Sync the native file input with the list every time the user adds or removes a file
   useEffect(() => {
-    // Sync the input every time the user adds or removes a file from the list
-    syncNativeInput(selectedFiles);
-  }, [selectedFiles]); // Trigger on every change to the list
-
-  // Helper function to sync the React state with the native HTML input
-  const syncNativeInput = (currentFiles: SelectedFile[]) => {
-    if (fileInputRef.current) {
-      const dataTransfer = new DataTransfer();
-      currentFiles.forEach((sf) => {
-        dataTransfer.items.add(sf.file);
-      });
-      // This line is what updates the "X files selected" text in the browser
-      fileInputRef.current.files = dataTransfer.files;
-    }
-  };
+    if (!fileInputRef.current) return;
+    const dataTransfer = new DataTransfer();
+    selectedFiles.forEach((sf) => {
+      dataTransfer.items.add(sf.file);
+    });
+    // This line is what updates the "X files selected" text in the browser
+    fileInputRef.current.files = dataTransfer.files;
+  }, [selectedFiles]);
 
   // Clean up Blob URLs to prevent memory leaks
   const cleanupPreviews = (files: SelectedFile[]) => {

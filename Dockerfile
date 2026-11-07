@@ -58,7 +58,13 @@ RUN adduser --system --uid 1001 nextjs
 # Copy the public directory
 COPY --from=builder /app/public ./public
 
-RUN npm install prisma @prisma/config @prisma/client
+# The migration CLI must match the locked Prisma version; an unpinned install
+# would pull whatever npm tags `latest` (e.g. a Prisma 8 release candidate).
+COPY --from=builder /app/node_modules/prisma/package.json /tmp/prisma-package.json
+RUN PRISMA_VERSION=$(node -p "require('/tmp/prisma-package.json').version") \
+  && test -n "$PRISMA_VERSION" \
+  && npm install prisma@$PRISMA_VERSION @prisma/config@$PRISMA_VERSION @prisma/client@$PRISMA_VERSION \
+  && rm /tmp/prisma-package.json
 
 COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/prisma ./prisma
