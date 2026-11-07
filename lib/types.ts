@@ -189,27 +189,6 @@ export const INTERACTION_COPY: Record<CommentInteractionType, { subjectVerb: str
     },
   };
 
-export const navLinks = [
-  {
-    label: "Обекти",
-    href: "/venues",
-    dropdown: [
-      { label: "Голф Клубове", href: "/golf-clubs" },
-      { label: "Барове", href: "/bars" },
-      { label: "Хотели", href: "/hotels" },
-      { label: "Кетъринг", href: "/catering" },
-      { label: "Парти центрове", href: "/party-centers" },
-      { label: "Премиум магазини за алкохол", href: "/premium-liquor-stores" },
-      { label: "Сватбени агенции", href: "/wedding-agencies" },
-    ],
-  },
-  { label: "Събития", href: "/events" },
-  { label: "Коктейли", href: "/cocktails" },
-  { label: "Социални мрежи", href: "/social-media" },
-  { label: "Ресурси", href: "/resources" },
-  { label: "Склад", href: "/warehouse" },
-];
-
 export type TaskFormState = {
   errors?: {
     title?: string[];

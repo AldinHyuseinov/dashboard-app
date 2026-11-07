@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "docker compose up -d sqlserver && vitest run",
+    "test:ci": "vitest run",
+    "test:watch": "docker compose up -d sqlserver && vitest"
   },
   "dependencies": {
     "@prisma/adapter-mssql": "^7.6.0",
@@ -31,6 +35,7 @@
     "eslint-config-next": "16.2.2",
     "prisma": "^7.6.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.12"
   }
 }

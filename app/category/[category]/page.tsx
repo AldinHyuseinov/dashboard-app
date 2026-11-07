@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import TaskBoard from "@/components/task/TaskBoard";
-import { navLinks } from "@/lib/types";
+import { getCategoryLabel } from "@/lib/categories";
 import { Metadata } from "next";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 
@@ -23,12 +23,8 @@ export default async function Tasks(props: {
   const currentPage = Number(searchParams.page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
-  if (
-    !navLinks.some(
-      (link) =>
-        link.href === `/${category}` || link.dropdown?.some((item) => item.href === `/${category}`),
-    )
-  ) {
+  const categoryLabel = getCategoryLabel(category);
+  if (categoryLabel === undefined) {
     notFound();
   }
 
@@ -56,22 +52,6 @@ export default async function Tasks(props: {
   ]);
 
   const totalPages = Math.ceil(totalTasks / ITEMS_PER_PAGE);
-
-  // Get label from navLinks
-  let categoryLabel = "Задачи";
-  const navLink = navLinks.find((link) => link.href === `/${category}`);
-  if (navLink) {
-    categoryLabel = navLink.label;
-  } else {
-    // Check dropdown items
-    for (const link of navLinks) {
-      const dropdownItem = link.dropdown?.find((item) => item.href === `/${category}`);
-      if (dropdownItem) {
-        categoryLabel = dropdownItem.label;
-        break;
-      }
-    }
-  }
 
   return (
     <div className="max-w-6xl mx-auto mt-2 px-2 flex flex-col">

@@ -1,25 +1,37 @@
 import nodemailer, { Transporter } from "nodemailer";
 
+/** One outgoing email. `to` is a single address or a list. */
+export type EmailMessage = {
+  to: string | string[];
+  subject: string;
+  /** HTML body */
+  html: string;
+};
+
 /**
  * Email sending abstraction — the seam for the notification module.
  *
  * Implementations:
- *   - NodemailerAdapter  — wraps nodemailer (production)
- *   - InMemoryAdapter    — captures messages for tests or serverless
- *   - SmtpAdapter        — future: direct SMTP without nodemailer
+ *   - NodemailerAdapter     — wraps nodemailer (production)
+ *   - InMemoryEmailAdapter  — captures messages so tests can read them
  */
 export interface EmailAdapter {
-  /**
-   * Send an email.
-   * @param params.to — single address or array
-   * @param params.subject — email subject line
-   * @param params.html — HTML body
-   */
-  send(params: {
-    to: string | string[];
-    subject: string;
-    html: string;
-  }): Promise<void>;
+  send(message: EmailMessage): Promise<void>;
+}
+
+/** An email captured by {@link InMemoryEmailAdapter}; `to` is always a list. */
+export type SentEmail = EmailMessage & { to: string[] };
+
+/**
+ * Keeps every email in memory instead of sending it. Inject it wherever an
+ * EmailAdapter is accepted, then assert on `sent`.
+ */
+export class InMemoryEmailAdapter implements EmailAdapter {
+  readonly sent: SentEmail[] = [];
+
+  async send({ to, subject, html }: EmailMessage): Promise<void> {
+    this.sent.push({ to: Array.isArray(to) ? [...to] : [to], subject, html });
+  }
 }
 
 export interface NodemailerAdapterOptions {
@@ -52,15 +64,7 @@ export class NodemailerAdapter implements EmailAdapter {
       });
   }
 
-  async send({
-    to,
-    subject,
-    html,
-  }: {
-    to: string | string[];
-    subject: string;
-    html: string;
-  }): Promise<void> {
+  async send({ to, subject, html }: EmailMessage): Promise<void> {
     await this.transporter.sendMail({
       from: `"AVEXIM Система" <${process.env.SMTP_USER}>`,
       to,

@@ -2,12 +2,56 @@ name: CI/CD
 
 on:
   push:
-    branches: ["main"]
   pull_request:
-    branches: ["main"]
 
 jobs:
-  build:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2025-latest
+        env:
+          ACCEPT_EULA: "Y"
+          # Throwaway test container; matches the default in tests/support/test-database.ts.
+          MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+        ports:
+          - 1433:1433
+
+    env:
+      # The Prisma config requires DATABASE_URL to load (e.g. for `prisma generate`).
+      # Tests ignore it and always use the dashboard_test database.
+      DATABASE_URL: "sqlserver://localhost:1433;database=dashboard_test;user=sa;password={YourStrong!Passw0rd};encrypt=true;trustServerCertificate=true"
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Integration tests
+        run: npm run test:ci
+
+  docker:
+    # Images are only ever published from main, and only once the tests pass.
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -29,12 +73,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/dashboard:0.1.${{ github.run_number }}
-
-      - name: Build and push latest image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/dashboard:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/dashboard:0.1.${{ github.run_number }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/dashboard:latest
