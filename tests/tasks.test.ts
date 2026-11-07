@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryEmailAdapter } from "@/lib/email-adapter";
 import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
+import { createComments } from "@/lib/comments";
 import type { Actor } from "@/lib/actor";
 import { createUser } from "./support/fixtures";
 
@@ -190,6 +191,35 @@ describe("Tasks", () => {
       expect(emails.sent).toHaveLength(1);
       expect(emails.sent[0].to).toEqual(["maria@avexim.test"]);
       expect(emails.sent[0].html).toContain("Изтрита задача в категория: Склад");
+    });
+
+    it("takes its Comments with it, including Replies that answer other Replies", async () => {
+      const ivan = await createUser("Ivan");
+      const maria = await createUser("Maria");
+      const { id } = await postTask(ivan);
+      const notifications = createNotifications({ emailAdapter: emails });
+      const comments = createComments({ notifications });
+      const comment = await comments.post(maria, { taskId: id, text: "Кога?", now: MONDAY_10AM });
+      if (!comment.ok) throw new Error(comment.error);
+      const reply = await comments.post(ivan, {
+        taskId: id,
+        text: "До петък",
+        replyToId: comment.comment.id,
+        now: MONDAY_10AM,
+      });
+      if (!reply.ok) throw new Error(reply.error);
+      await comments.post(maria, {
+        taskId: id,
+        text: "Добре",
+        replyToId: reply.comment.id,
+        now: MONDAY_10AM,
+      });
+
+      const result = await tasks.delete(ivan, id);
+
+      expect(result.ok).toBe(true);
+      expect(await tasks.get(ivan, id)).toBeNull();
+      expect(await comments.list(ivan, id)).toEqual([]);
     });
 
     it("is refused to anyone but the Task Owner, and the Task is kept", async () => {

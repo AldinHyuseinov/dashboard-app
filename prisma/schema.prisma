@@ -114,6 +114,12 @@ model Comment {
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   replies  Comment[] @relation("CommentReplies")
 
+  /// The Comment a Reply answers: its top-level Comment or another Reply in the
+  /// same thread. Null on top-level Comments.
+  answersId  String?
+  answers    Comment?  @relation("CommentAnswers", fields: [answersId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  answeredBy Comment[] @relation("CommentAnswers")
+
   reactions Reaction[]
 }
 

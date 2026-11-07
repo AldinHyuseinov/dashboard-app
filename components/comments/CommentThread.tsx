@@ -24,7 +24,8 @@ export default function CommentThread({
   currentUserId: string;
   isTaskOwner: boolean;
   isPending: boolean;
-  onReply: (parentId: string, text: string) => void;
+  /** Posts a Reply answering the Comment `answeredId`. */
+  onReply: (answeredId: string, text: string) => void;
   onReact: (commentId: string, emoji: string) => void;
   onDelete: (commentId: string) => void;
   onEdit: (commentId: string, text: string) => void;
@@ -41,36 +42,12 @@ export default function CommentThread({
     return cleanText;
   };
 
-  const getReplyTargetData = (reply: Comment, index: number) => {
-    const mentionMatch = reply.text.match(/^@([a-zA-Z0-9а-яА-ЯёЁ_]+)/);
-
-    if (mentionMatch) {
-      const username = mentionMatch[1];
-
-      for (let i = index - 1; i >= 0; i--) {
-        const prevReply = replies[i];
-        const prevAuthor = prevReply.user?.name || "Потребител";
-
-        if (prevAuthor === username) {
-          return {
-            replyingToName: prevAuthor,
-            replyingToText: truncateQuote(prevReply.text),
-          };
-        }
-      }
-
-      const parentAuthor = topLevel.user?.name || "Потребител";
-      if (parentAuthor === username) {
-        return {
-          replyingToName: parentAuthor,
-          replyingToText: truncateQuote(topLevel.text),
-        };
-      }
-    }
-
+  // The "@Name" prefix is display only; the Reply records which Comment it answers.
+  const getReplyTargetData = (reply: Comment) => {
+    const answered = replies.find((r) => r.id === reply.answersId) ?? topLevel;
     return {
-      replyingToName: topLevel.user?.name || "Потребител",
-      replyingToText: truncateQuote(topLevel.text),
+      replyingToName: answered.user?.name || "Потребител",
+      replyingToText: truncateQuote(answered.text),
     };
   };
 
@@ -115,8 +92,8 @@ export default function CommentThread({
                 <ChevronIcon flipped />
                 Скрий отговорите
               </button>
-              {replies.map((reply, index) => {
-                const targetData = getReplyTargetData(reply, index);
+              {replies.map((reply) => {
+                const targetData = getReplyTargetData(reply);
 
                 return (
                   <ReplyRow
@@ -125,7 +102,7 @@ export default function CommentThread({
                     currentUserId={currentUserId}
                     isTaskOwner={isTaskOwner}
                     isPending={isPending}
-                    onReply={(text) => onReply(topLevel.id, text)}
+                    onReply={(text) => onReply(reply.id, text)}
                     onReact={onReact}
                     onDelete={onDelete}
                     onEdit={onEdit}
@@ -325,7 +302,8 @@ function CommentCard({
         </div>
       )}
 
-      {!isEditing && (
+      {/* A Comment that isn't saved yet has no identity a Reply could answer. */}
+      {!isEditing && !comment.id.startsWith("optimistic-") && (
         <div className="flex justify-end items-center pt-1 mt-0.5 border-t border-gray-100/50">
           <button
             type="button"

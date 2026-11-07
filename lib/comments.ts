@@ -52,8 +52,8 @@ export function createComments({ notifications }: CommentDeps) {
 
   /**
    * Posts a Comment on a Task, or a Reply when `replyToId` names the Comment
-   * being answered. Threads are one level deep: a Reply to a Reply is filed
-   * under the thread's top-level Comment.
+   * being answered, which the Reply records. Threads are one level deep: a
+   * Reply to a Reply is filed under the thread's top-level Comment.
    */
   async function post(
     actor: Actor,
@@ -69,6 +69,7 @@ export function createComments({ notifications }: CommentDeps) {
     if (!task) return { ok: false, error: TASK_NOT_FOUND };
 
     let parentId: string | null = null;
+    let answersId: string | null = null;
     if (input.replyToId) {
       const answered = await prisma.comment.findUnique({
         where: { id: input.replyToId },
@@ -77,10 +78,11 @@ export function createComments({ notifications }: CommentDeps) {
       if (!answered) return { ok: false, error: COMMENT_NOT_FOUND };
       if (answered.taskId !== task.id) return { ok: false, error: REPLY_ON_ANOTHER_TASK };
       parentId = answered.parentId ?? answered.id;
+      answersId = answered.id;
     }
 
     const comment = await prisma.comment.create({
-      data: { text, taskId: task.id, userId: actor.id, parentId, createdAt: input.now },
+      data: { text, taskId: task.id, userId: actor.id, parentId, answersId, createdAt: input.now },
       select: { id: true },
     });
 
@@ -127,18 +129,23 @@ export function createComments({ notifications }: CommentDeps) {
 
   /**
    * Deletes a Comment with its Reactions. Deleting a top-level Comment also
-   * deletes its Replies. Only its author may delete it.
+   * deletes its Replies. Replies that answered a deleted Reply answer the
+   * thread's top-level Comment instead. Only its author may delete it.
    */
   async function remove(actor: Actor, commentId: string): Promise<CommentResult> {
     const comment = await findComment(commentId);
     if (!comment) return { ok: false, error: COMMENT_NOT_FOUND };
     if (comment.userId !== actor.id) return { ok: false, error: ONLY_THE_AUTHOR_DELETES };
 
-    // Threads are one level deep, so a Comment's Replies have no Replies of their own.
-    await prisma.$transaction([
-      prisma.comment.deleteMany({ where: { parentId: comment.id } }),
-      prisma.comment.delete({ where: { id: comment.id } }),
-    ]);
+    // Threads are one level deep, so a top-level Comment's Replies have no
+    // Replies of their own, and every Reply answering one of them goes too.
+    const clearThread = comment.parentId
+      ? prisma.comment.updateMany({
+          where: { answersId: comment.id },
+          data: { answersId: comment.parentId },
+        })
+      : prisma.comment.deleteMany({ where: { parentId: comment.id } });
+    await prisma.$transaction([clearThread, prisma.comment.delete({ where: { id: comment.id } })]);
     return { ok: true, comment: comment.ref };
   }
 

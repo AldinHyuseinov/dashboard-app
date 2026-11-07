@@ -67,6 +67,7 @@ describe("Comments", () => {
           userId: maria.id,
           user: { name: "Maria" },
           parentId: null,
+          answersId: null,
           isPinned: false,
           createdAt: MONDAY_10AM,
           editedAt: null,
@@ -122,13 +123,13 @@ describe("Comments", () => {
 
       expect(result.ok).toBe(true);
       const reply = (await comments.list(ivan, task.id)).find((c) => c.text === "До петък");
-      expect(reply).toMatchObject({ parentId: comment.id, userId: ivan.id });
+      expect(reply).toMatchObject({ parentId: comment.id, answersId: comment.id, userId: ivan.id });
       expect(emails.sent).toHaveLength(1);
       expect(emails.sent[0].to.toSorted()).toEqual(["georgi@avexim.test", "maria@avexim.test"]);
       expect(emails.sent[0].subject).toBe("Нов отговор: Нова винена листа");
     });
 
-    it("a Reply to a Reply is filed under the top-level Comment, keeping the thread one level deep", async () => {
+    it("a Reply to a Reply is filed under the top-level Comment, but records the Reply it answers", async () => {
       const ivan = await createUser("Ivan");
       const maria = await createUser("Maria");
       const georgi = await createUser("Georgi");
@@ -144,7 +145,7 @@ describe("Comments", () => {
       });
 
       const answer = (await comments.list(georgi, task.id)).find((c) => c.text === "Аз ще помогна");
-      expect(answer).toMatchObject({ parentId: comment.id });
+      expect(answer).toMatchObject({ parentId: comment.id, answersId: reply.id });
     });
 
     it("is refused when the answered Comment is on another Task, and nothing is posted (bug 2)", async () => {
@@ -253,12 +254,13 @@ describe("Comments", () => {
   });
 
   describe("deleting a Comment", () => {
-    it("the author deletes a top-level Comment, and its Replies go with it", async () => {
+    it("the author deletes a top-level Comment, and its Replies, including Replies to Replies, go with it", async () => {
       const ivan = await createUser("Ivan");
       const maria = await createUser("Maria");
       const task = await postTask(ivan);
       const comment = await post(maria, task.id, "Кога е срокът?");
       const reply = await post(ivan, task.id, "До петък", comment.id);
+      await post(maria, task.id, "Благодаря", reply.id);
       await comments.react(maria, { commentId: reply.id, emoji: "👍" });
       await post(ivan, task.id, "Друга тема");
 
@@ -279,6 +281,31 @@ describe("Comments", () => {
       await comments.delete(ivan, reply.id);
 
       expect(await comments.list(ivan, task.id)).toMatchObject([{ text: "Кога е срокът?" }]);
+    });
+
+    it("deleting a Reply that others answered makes their Replies answer the top-level Comment", async () => {
+      const ivan = await createUser("Ivan");
+      const maria = await createUser("Maria");
+      const georgi = await createUser("Georgi");
+      const task = await postTask(ivan);
+      const comment = await post(maria, task.id, "Кога е срокът?");
+      const reply = await post(ivan, task.id, "До петък", comment.id);
+      await post(georgi, task.id, "Аз ще помогна", reply.id);
+      await post(maria, task.id, "Чудесно", reply.id);
+
+      const result = await comments.delete(ivan, reply.id);
+
+      expect(result.ok).toBe(true);
+      const remaining = await comments.list(ivan, task.id);
+      expect(remaining).toHaveLength(3);
+      expect(remaining.find((c) => c.text === "Аз ще помогна")).toMatchObject({
+        parentId: comment.id,
+        answersId: comment.id,
+      });
+      expect(remaining.find((c) => c.text === "Чудесно")).toMatchObject({
+        parentId: comment.id,
+        answersId: comment.id,
+      });
     });
 
     it("is refused to anyone but the author, even the Task Owner", async () => {

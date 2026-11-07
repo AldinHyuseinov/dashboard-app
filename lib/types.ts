@@ -154,6 +154,8 @@ export type Comment = {
   userId: string;
   user: { name: string | null };
   parentId?: string | null;
+  /** The Comment a Reply answers: its top-level Comment or another Reply in the thread. */
+  answersId?: string | null;
   reactions?: CommentReaction[];
 };
 

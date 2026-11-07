@@ -176,14 +176,19 @@ export default function TaskCommentsSection({
     });
   };
 
-  const handleReply = (parentId: string, text: string) => {
+  const handleReply = (answeredId: string, text: string) => {
+    // Threads are one level deep: a Reply to a Reply is filed under the
+    // top-level Comment, but still records the Reply it answers.
+    const answered = comments.find((c) => c.id === answeredId);
+    if (!answered) return;
     const optimisticComment: Comment = {
       id: `optimistic-${Date.now()}`,
       text,
       userId: currentUserId,
       user: { name: "Вие" },
       createdAt: new Date(),
-      parentId,
+      parentId: answered.parentId ?? answered.id,
+      answersId: answeredId,
       reactions: [],
     };
 
@@ -192,9 +197,7 @@ export default function TaskCommentsSection({
 
     startTransition(async () => {
       try {
-        // The Comments module files a Reply to a Reply under the top-level
-        // Comment, keeping threading flat.
-        await createCommentAction({ taskId, text, replyToId: parentId });
+        await createCommentAction({ taskId, text, replyToId: answeredId });
       } catch (err) {
         console.error(err);
         setComments((prev) => prev.filter((c) => c.id !== optimisticComment.id));
@@ -246,12 +249,18 @@ export default function TaskCommentsSection({
 
     setComments((prev) => {
       // Flat model: a comment can only have direct replies, never
-      // grandchildren, so a single filter pass is enough.
+      // grandchildren, so one pass finds everything to remove.
+      const deleted = prev.find((c) => c.id === commentId);
       const idsToRemove = new Set<string>([commentId]);
       for (const c of prev) {
         if (c.parentId === commentId) idsToRemove.add(c.id);
       }
-      return prev.filter((c) => !idsToRemove.has(c.id));
+      // Replies that answered a deleted Reply now answer the top-level Comment.
+      return prev
+        .filter((c) => !idsToRemove.has(c.id))
+        .map((c) =>
+          c.answersId === commentId ? { ...c, answersId: deleted?.parentId ?? null } : c,
+        );
     });
     setAwaitingSync(true);
 
