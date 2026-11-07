@@ -7,6 +7,7 @@ import Link from "next/link";
 import { PdfPreviewLarge } from "@/components/task/FilePreview";
 import TaskMeta from "@/components/task/TaskMeta";
 import TaskCommentsSection from "@/components/comments/TaskCommentsSection";
+import { MarkTaskOpened } from "@/components/shell/UnreadCount";
 
 export default async function TaskDetailPage({
   params,
@@ -20,6 +21,8 @@ export default async function TaskDetailPage({
     redirect("/login?not-authorized=true");
   }
 
+  // Taken before the Task is read: anything newer may be missing from it, so stays Unread.
+  const shownAt = new Date();
   const task = await tasks.get(actor, taskId);
   if (!task) return notFound();
 
@@ -33,6 +36,7 @@ export default async function TaskDetailPage({
 
   return (
     <div className="flex flex-col gap-4 justify-center items-center mx-auto p-4 w-full max-w-md md:max-w-3xl overflow-x-hidden">
+      <MarkTaskOpened taskId={task.id} shownAt={shownAt} />
       <div className="bg-white rounded-xl shadow-xl p-6 relative w-full border border-gray-100 min-w-0">
         {/* Header Metadata */}
         <div className="border-b border-gray-100 pb-4 mb-4">

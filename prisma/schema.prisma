@@ -27,6 +27,11 @@ model User {
   reactions     Reaction[]
   uploadedFiles TaskFile[]
   activities    Activity[]
+  taskOpenings  TaskOpening[]
+
+  /// When the user last opened the Activity Feed: what others did up to then
+  /// is no longer Unread for them. Null until they first open it.
+  lastFeedVisitAt DateTime?
 
   @@unique([email])
   @@map("user")
@@ -152,6 +157,19 @@ model Activity {
   @@index([occurredAt, id])
   @@index([taskId])
   @@index([commentId])
+}
+
+/// When a user last opened a Task: its Activities up to then are no longer
+/// Unread for them.
+model TaskOpening {
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Deliberately not a relation: like its Activities, it outlives the Task,
+  /// so they stay read once the Task is deleted.
+  taskId   String
+  openedAt DateTime
+
+  @@id([userId, taskId])
 }
 
 model Reaction {

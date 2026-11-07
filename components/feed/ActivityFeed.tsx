@@ -17,6 +17,11 @@ function FeedItemContent({ item }: { item: FeedItem }) {
   return (
     <>
       <p className="text-sm text-gray-700">
+        {item.unread && (
+          <span className="mr-1 inline-block size-1 rounded-full bg-berry align-middle">
+            <span className="sr-only">Ново: </span>
+          </span>
+        )}
         <span className="font-bold text-gray-800">{item.actor.name}</span> {ACTIONS[item.type]}
       </p>
       <p
@@ -40,7 +45,10 @@ function FeedItemContent({ item }: { item: FeedItem }) {
   );
 }
 
-/** The Activity Feed's items, newest first. Items of an existing Task open it. */
+/**
+ * The Activity Feed's items, newest first. Unread items carry the berry dot.
+ * Items of an existing Task open it.
+ */
 export default function ActivityFeed({ items }: { items: FeedItem[] }) {
   if (items.length === 0) {
     return <p className="text-gray-500 text-center">Все още няма активност.</p>;

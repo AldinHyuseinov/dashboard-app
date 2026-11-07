@@ -8,20 +8,16 @@ import { initials } from "@/lib/utils";
 import { FeedIcon, PlusIcon } from "./icons";
 import Logo from "./Logo";
 import UnreadBadge from "./UnreadBadge";
+import { useUnreadCount } from "./UnreadCount";
 
 /**
  * The desktop sidebar: the logo, New task, the Feed and every Category
  * (Venues' Categories under their heading, then the rest), and the Profile.
  * Hidden on phones, where the bottom bar takes over.
  */
-export default function Sidebar({
-  userName,
-  unreadCount,
-}: {
-  userName: string;
-  unreadCount?: number;
-}) {
+export default function Sidebar({ userName }: { userName: string }) {
   const pathname = usePathname();
+  const unreadCount = useUnreadCount();
   const screen = screenAt(pathname);
 
   const feed = navItem("feed");

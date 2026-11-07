@@ -1,6 +1,7 @@
 import Alert from "@/components/notification/Alert";
 import ActivityFeed from "@/components/feed/ActivityFeed";
 import Pagination from "@/components/Pagination";
+import { MarkFeedSeen } from "@/components/shell/UnreadCount";
 import { activity } from "@/lib/activity";
 import { getActor } from "@/lib/session";
 import { Metadata } from "next";
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
   title: "Avexim Communication | Активност",
 };
 
-/** The Activity Feed: the first screen after signing in. */
+/**
+ * The Activity Feed: the first screen after signing in. Its Unread items are
+ * marked as of the last visit, and once it's on show, this visit is recorded.
+ */
 export default async function Home(props: { searchParams: Promise<{ page?: string }> }) {
   const actor = await getActor();
   if (!actor) {
@@ -19,6 +23,8 @@ export default async function Home(props: { searchParams: Promise<{ page?: strin
   }
 
   const searchParams = await props.searchParams;
+  // Taken before the Feed is read: anything newer may be missing from it, so stays Unread.
+  const shownAt = new Date();
   const feed = await activity.feed(actor, { page: Number(searchParams.page) });
 
   return (
@@ -31,6 +37,7 @@ export default async function Home(props: { searchParams: Promise<{ page?: strin
         <h1 className="text-3xl font-bold text-tertiary-brown text-center">Активност</h1>
       </div>
 
+      <MarkFeedSeen shownAt={shownAt} />
       <ActivityFeed items={feed.items} />
 
       <Pagination

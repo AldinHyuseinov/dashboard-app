@@ -1,4 +1,4 @@
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
 import { categoryLabelOrSlug } from "@/lib/categories";
@@ -32,6 +32,8 @@ export type FeedItem = {
   task: { id: string; title: string; category: string; categoryLabel: string; deleted: boolean };
   /** For Comment and Reply Activities: the start of the Comment's current text. */
   comment: { id: string; excerpt: string } | null;
+  /** Whether the user viewing the Feed hasn't seen it yet (see `unreadWhere`). */
+  unread: boolean;
 };
 
 /** One page of the Activity Feed. */
@@ -117,6 +119,43 @@ function excerpt(text: string): string {
   return text.length > EXCERPT_LENGTH ? `${text.slice(0, EXCERPT_LENGTH).trimEnd()}…` : text;
 }
 
+/**
+ * The Unread rule, as a condition on the Activity `a`: it is Unread for the
+ * Actor when someone else caused it, and it's newer than both their
+ * last Feed visit (if any) and their last opening of its Task (if any).
+ */
+function unreadWhere(actor: Actor) {
+  return Prisma.sql`
+    a.[actorId] <> ${actor.id}
+    AND NOT EXISTS (
+      SELECT 1 FROM [dbo].[user] u
+      WHERE u.[id] = ${actor.id} AND u.[lastFeedVisitAt] >= a.[occurredAt]
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM [dbo].[TaskOpening] o
+      WHERE o.[userId] = ${actor.id} AND o.[taskId] = a.[taskId] AND o.[openedAt] >= a.[occurredAt]
+    )`;
+}
+
+/** Which of `activityIds` are Unread for the Actor. */
+async function unreadAmong(actor: Actor, activityIds: string[]): Promise<Set<string>> {
+  if (activityIds.length === 0) return new Set();
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT a.[id] FROM [dbo].[Activity] a
+    WHERE a.[id] IN (${Prisma.join(activityIds)}) AND ${unreadWhere(actor)}`;
+  return new Set(rows.map((row) => row.id));
+}
+
+/**
+ * Up to when a screen counts as seen: when it was shown (by default, `now`,
+ * when the visit is recorded), but never later than `now`. The time a screen
+ * was shown comes back from the person's device, so it can't be trusted to
+ * lie in the past.
+ */
+function shownUntil(shownAt: Date | undefined, now: Date): Date {
+  return shownAt && shownAt.getTime() < now.getTime() ? shownAt : now;
+}
+
 /** Builds the Activity module. */
 export function createActivity() {
   /**
@@ -147,6 +186,7 @@ export function createActivity() {
       select: { id: true, title: true },
     });
     const currentTitles = new Map(liveTasks.map((task) => [task.id, task.title]));
+    const unread = await unreadAmong(actor, rows.map((row) => row.id));
 
     const items = rows.map((row): FeedItem => ({
       id: row.id,
@@ -161,11 +201,57 @@ export function createActivity() {
         deleted: !currentTitles.has(row.taskId),
       },
       comment: row.comment ? { id: row.comment.id, excerpt: excerpt(row.comment.text) } : null,
+      unread: unread.has(row.id),
     }));
     return { items, currentPage, totalPages };
   }
 
-  return { feed };
+  /**
+   * Records that the Actor opened the Activity Feed: everything up to the
+   * moment it was shown is no longer Unread for them. An earlier time than
+   * their last visit changes nothing, so nothing becomes Unread again.
+   */
+  async function markFeedSeen(actor: Actor, { shownAt, now }: { shownAt?: Date; now: Date }) {
+    const seenAt = shownUntil(shownAt, now);
+    await prisma.user.updateMany({
+      where: { id: actor.id, OR: [{ lastFeedVisitAt: null }, { lastFeedVisitAt: { lt: seenAt } }] },
+      data: { lastFeedVisitAt: seenAt },
+    });
+  }
+
+  /**
+   * Records that the Actor opened a Task: its Activities up to the moment it
+   * was shown are no longer Unread for them. As with the Feed, an earlier
+   * time than their last opening changes nothing.
+   */
+  async function markTaskOpened(
+    actor: Actor,
+    { taskId, shownAt, now }: { taskId: string; shownAt?: Date; now: Date },
+  ) {
+    const openedAt = shownUntil(shownAt, now);
+    const key = { userId: actor.id, taskId };
+    const { count } = await prisma.taskOpening.updateMany({
+      where: { ...key, openedAt: { lt: openedAt } },
+      data: { openedAt },
+    });
+    if (count > 0) return;
+
+    try {
+      await prisma.taskOpening.create({ data: { ...key, openedAt } });
+    } catch (error) {
+      // Already opened at this time or later, perhaps just now in another tab.
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) throw error;
+    }
+  }
+
+  /** How many Activities are Unread for the Actor: the navigation's count and the app's badge. */
+  async function unreadCount(actor: Actor): Promise<number> {
+    const [{ count }] = await prisma.$queryRaw<{ count: number }[]>`
+      SELECT COUNT(*) AS [count] FROM [dbo].[Activity] a WHERE ${unreadWhere(actor)}`;
+    return count;
+  }
+
+  return { feed, markFeedSeen, markTaskOpened, unreadCount };
 }
 
 export const activity = createActivity();

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { NAV_ITEMS, screenAt, type NavItemId } from "@/lib/navigation";
 import { CategoriesIcon, FeedIcon, PlusIcon, ProfileIcon } from "./icons";
 import UnreadBadge from "./UnreadBadge";
+import { useUnreadCount } from "./UnreadCount";
 
 const ICONS: Record<Exclude<NavItemId, "new-task">, typeof FeedIcon> = {
   feed: FeedIcon,
@@ -16,8 +17,9 @@ const ICONS: Record<Exclude<NavItemId, "new-task">, typeof FeedIcon> = {
  * The phone's bottom bar: Feed, Categories, New task and Profile, kept clear
  * of the home bar. Hidden on desktop, where the sidebar takes over.
  */
-export default function BottomBar({ unreadCount }: { unreadCount?: number }) {
+export default function BottomBar() {
   const { navItem } = screenAt(usePathname());
+  const unreadCount = useUnreadCount();
 
   return (
     <nav

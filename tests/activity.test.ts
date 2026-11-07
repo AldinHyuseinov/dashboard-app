@@ -75,6 +75,7 @@ describe("Activity Feed", () => {
             deleted: false,
           },
           comment: null,
+          unread: true,
         },
       ]);
     });
