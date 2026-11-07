@@ -1,7 +1,7 @@
 // app/category/[category]/[taskId]/page.tsx
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getActor } from "@/lib/session";
+import { tasks } from "@/lib/tasks";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { PdfPreviewLarge } from "@/components/task/FilePreview";
@@ -15,34 +15,25 @@ export default async function TaskDetailPage({
 }) {
   const { category, taskId } = await params;
 
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
+  const actor = await getActor();
+  if (!actor) {
     redirect("/login?not-authorized=true");
   }
 
-  // Fetch task with creator, files and comments
-  const task = await prisma.task.findUnique({
-    where: { id: taskId },
+  const task = await tasks.get(actor, taskId);
+  if (!task) return notFound();
+
+  // Comments move into the Comments module in ticket 04.
+  const comments = await prisma.comment.findMany({
+    where: { taskId },
+    orderBy: { createdAt: "asc" },
     include: {
       user: { select: { name: true } },
-      files: { select: { id: true, fileName: true, fileType: true } },
-      comments: {
-        orderBy: { createdAt: "asc" },
-        include: {
-          user: { select: { name: true } },
-          reactions: {
-            include: {
-              user: { select: { name: true } },
-            },
-          },
-        },
-      },
+      reactions: { include: { user: { select: { name: true } } } },
     },
   });
 
-  if (!task) return notFound();
-
-  const isOwner = task.userId === session.user.id;
+  const isOwner = task.userId === actor.id;
 
   // Helpers to check for file types
   const hasVideos = task.files.some((f) => f.fileType.startsWith("video/"));
@@ -162,9 +153,9 @@ export default async function TaskDetailPage({
         <TaskCommentsSection
           taskId={task.id}
           taskOwnerId={task.userId}
-          initialComments={task.comments}
+          initialComments={comments}
           category={category}
-          currentUserId={session.user.id}
+          currentUserId={actor.id}
         />
       </div>
     </div>

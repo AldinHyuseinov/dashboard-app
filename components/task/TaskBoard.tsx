@@ -38,7 +38,6 @@ export default function TaskBoard({
           <TaskCard
             key={task.id}
             task={task}
-            category={category}
             currentUserId={currentUserId}
             onView={() => {
               // Navigates to the read-only view page

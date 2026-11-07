@@ -87,12 +87,6 @@ export const profileUpdateSchema = z
     }
   });
 
-export const taskSchema = z.object({
-  title: z.string().min(1, "Заглавието е задължително."),
-  description: z.string().min(1, "Описанието е задължително."),
-  category: z.string().min(1),
-});
-
 export type LoginState = {
   errors?: {
     email?: string[];
@@ -129,7 +123,6 @@ export type TaskWithFiles = Task & {
 
 export type TaskCardProps = {
   task: TaskWithFiles;
-  category: string;
   currentUserId: string;
   onView: () => void;
 };

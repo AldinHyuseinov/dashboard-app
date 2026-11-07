@@ -1,7 +1,6 @@
 import TaskForm from "@/components/task/TaskForm";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { headers } from "next/headers";
+import { getActor } from "@/lib/session";
+import { tasks } from "@/lib/tasks";
 import { notFound, redirect } from "next/navigation";
 
 export default async function EditTaskPage({
@@ -11,20 +10,12 @@ export default async function EditTaskPage({
 }) {
   const { category, taskId } = await params;
 
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
+  const actor = await getActor();
+  if (!actor) {
     redirect("/login?not-authorized=true");
   }
 
-  // Fetch the existing task with its files
-  const task = await prisma.task.findUnique({
-    where: { id: taskId },
-    include: {
-      files: {
-        select: { id: true, fileName: true, fileType: true }, // Only metadata
-      },
-    },
-  });
+  const task = await tasks.get(actor, taskId);
 
   if (!task) return notFound();
 

@@ -7,3 +7,11 @@ export async function createUser(name: string, email = `${name.toLowerCase()}@av
     data: { id: randomUUID(), name, email, emailVerified: true },
   });
 }
+
+/** A file uploaded through the upload route but not yet attached to a Task. */
+export async function uploadFile(fileName = "снимка.webp") {
+  return prisma.taskFile.create({
+    data: { fileName, fileType: "image/webp", data: Buffer.from("not really an image") },
+    select: { id: true },
+  });
+}

@@ -2,29 +2,31 @@
 
 import { deleteTask, toggleTaskStatus } from "@/actions/task-actions";
 import { TaskCardProps } from "@/lib/types";
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { PdfPreviewLarge } from "./FilePreview";
 import TaskMeta from "./TaskMeta";
 
 export default function TaskCard({
   task,
-  category,
   currentUserId,
   onView,
-}: TaskCardProps & { onView: () => void }) {
+}: TaskCardProps) {
   const [isPending, startTransition] = useTransition();
+  // Shows the new status on click; the board refreshes once the server confirms it.
+  const [isDone, setOptimisticDone] = useOptimistic(task.isDone);
   const isOwner = task.userId === currentUserId;
 
   const handleToggle = () => {
-    startTransition(() => {
-      toggleTaskStatus(task.id, !task.isDone, category);
+    startTransition(async () => {
+      setOptimisticDone(!isDone);
+      await toggleTaskStatus(task.id, !isDone);
     });
   };
 
   const handleDelete = () => {
     if (confirm("Сигурни ли сте, че искате да изтриете тази задача?")) {
       startTransition(() => {
-        deleteTask(task.id, category);
+        deleteTask(task.id);
       });
     }
   };
@@ -32,18 +34,18 @@ export default function TaskCard({
   return (
     <div
       className={`relative h-fit max-w-50 p-1 mb-2 rounded-lg border shadow-sm transform transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-xl hover:z-10 hover:border-primary-gold ${
-        task.isDone ? "bg-gray-50 border-gray-200" : "bg-white border-secondary-gold-dark"
+        isDone ? "bg-gray-50 border-gray-200" : "bg-white border-secondary-gold-dark"
       }`}
     >
       <div className="flex flex-col justify-between items-start mb-1">
         <h3
-          className={`flex gap-1 font-bold text-lg ${task.isDone ? "line-through text-gray-400" : "text-gray-800"}`}
+          className={`flex gap-1 font-bold text-lg ${isDone ? "line-through text-gray-400" : "text-gray-800"}`}
         >
           {task.title}
 
           <input
             type="checkbox"
-            checked={task.isDone}
+            checked={isDone}
             onChange={handleToggle}
             disabled={isPending}
             className="w-1 accent-primary-gold cursor-pointer"
@@ -54,7 +56,7 @@ export default function TaskCard({
       </div>
 
       <p
-        className={`text-sm mb-4 whitespace-pre-wrap wrap-break-word ${task.isDone ? "text-gray-400 line-through" : "text-gray-600"}`}
+        className={`text-sm mb-4 whitespace-pre-wrap wrap-break-word ${isDone ? "text-gray-400 line-through" : "text-gray-600"}`}
       >
         {task.description}
       </p>
@@ -97,13 +99,13 @@ export default function TaskCard({
                     src={`/api/files/${file.id}`}
                     alt={file.fileName}
                     className={`w-16 h-16 object-cover rounded-md border transition-all ${
-                      task.isDone
+                      isDone
                         ? "border-gray-200 opacity-50 grayscale hover:opacity-75"
                         : "border-gray-200 hover:border-primary-gold hover:scale-105"
                     }`}
                   />
                 ) : (
-                  <PdfPreviewLarge fileName={file.fileName} styleCondition={task.isDone} />
+                  <PdfPreviewLarge fileName={file.fileName} styleCondition={isDone} />
                 )}
               </a>
             );
