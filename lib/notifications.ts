@@ -28,6 +28,19 @@ function categoryLabelOrSlug(category: string): string {
   return getCategoryLabel(category) ?? category;
 }
 
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+
+/** Text to place in an email's HTML, shown as written rather than read as markup. */
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
 /**
  * Builds the notification functions around the given delivery adapters.
  * Production code uses the default instance exported below; tests inject
@@ -72,7 +85,7 @@ export function createNotifications({ emailAdapter }: NotificationDeps) {
       subject: "Известие за задача",
       html: `
       <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; background-color: #f9f9f9;">
-          <h3 style="color: #CDA349;">${action} задача в категория: ${categoryLabelOrSlug(category)}</h3>
+          <h3 style="color: #CDA349;">${escapeHtml(action)} задача в категория: ${escapeHtml(categoryLabelOrSlug(category))}</h3>
           <p style="font-size: 12px; color: #888; border-top: 1px solid #eee;">
           Това е автоматично системно известие.
         </p>
@@ -84,7 +97,8 @@ export function createNotifications({ emailAdapter }: NotificationDeps) {
 
   /**
    * Send a comment/reply/reaction notification to all users except the actor.
-   * Awaited end-to-end; send errors are logged, not thrown.
+   * Awaited end-to-end; send errors are logged, not thrown. Names and titles
+   * are escaped in the body; the subject is plain text and needs no escaping.
    *
    * @param category — Category slug
    * @param type — comment | reply | reaction
@@ -113,8 +127,8 @@ export function createNotifications({ emailAdapter }: NotificationDeps) {
           <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 600px;">
             <h3 style="color: #CDA349; margin-top: 0;">AVEXIM Платформа</h3>
             <p style="font-size: 15px; color: #333;">
-              Потребителят <strong>${actorName}</strong> ${copy.bodyVerb}:
-              <strong>${taskTitle}</strong> в категория <span style="color: #CDA349; font-weight: bold;">${categoryLabelOrSlug(category)}</span>.
+              Потребителят <strong>${escapeHtml(actorName)}</strong> ${copy.bodyVerb}:
+              <strong>${escapeHtml(taskTitle)}</strong> в категория <span style="color: #CDA349; font-weight: bold;">${escapeHtml(categoryLabelOrSlug(category))}</span>.
             </p>
 
             <p style="font-size: 12px; color: #888; border-top: 1px solid #eee;">

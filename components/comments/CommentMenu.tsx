@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-const REACTION_EMOJIS = ["❤️", "🤣", "😮", "😥", "😡", "👍", "👎", "👏"];
+import { REACTION_EMOJIS } from "@/lib/constants";
 
 export default function CommentMenu({
   canDelete,

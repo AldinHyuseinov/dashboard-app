@@ -81,13 +81,11 @@ export default function TaskCommentsSection({
   taskId,
   taskOwnerId,
   initialComments = [],
-  category,
   currentUserId,
 }: {
   taskId: string;
   taskOwnerId: string;
   initialComments: Comment[];
-  category: string;
   currentUserId: string;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -169,7 +167,7 @@ export default function TaskCommentsSection({
 
     startTransition(async () => {
       try {
-        await createCommentAction({ taskId, text, parentId: null }, category);
+        await createCommentAction({ taskId, text });
       } catch (err) {
         console.error(err);
         setComments((prev) => prev.filter((c) => c.id !== optimisticComment.id));
@@ -194,9 +192,9 @@ export default function TaskCommentsSection({
 
     startTransition(async () => {
       try {
-        // The server resolves reply-to-a-reply up to the top-level comment
-        // automatically (see createCommentAction), keeping threading flat.
-        await createCommentAction({ taskId, text, parentId }, category);
+        // The Comments module files a Reply to a Reply under the top-level
+        // Comment, keeping threading flat.
+        await createCommentAction({ taskId, text, replyToId: parentId });
       } catch (err) {
         console.error(err);
         setComments((prev) => prev.filter((c) => c.id !== optimisticComment.id));
@@ -234,7 +232,7 @@ export default function TaskCommentsSection({
 
     startTransition(async () => {
       try {
-        await toggleReactionAction(commentId, emoji, category);
+        await toggleReactionAction(commentId, emoji);
       } catch (err) {
         console.error(err);
         setComments(previous);
@@ -259,7 +257,7 @@ export default function TaskCommentsSection({
 
     startTransition(async () => {
       try {
-        await deleteCommentAction(commentId, category);
+        await deleteCommentAction(commentId);
       } catch (err) {
         console.error(err);
         setComments(previous);
@@ -277,7 +275,7 @@ export default function TaskCommentsSection({
 
     startTransition(async () => {
       try {
-        await editCommentAction(commentId, text, category);
+        await editCommentAction(commentId, text);
       } catch (err) {
         console.error(err);
         setComments(previous);
@@ -301,7 +299,7 @@ export default function TaskCommentsSection({
 
     startTransition(async () => {
       try {
-        await pinCommentAction(commentId, taskId, category);
+        await pinCommentAction(commentId);
       } catch (err) {
         console.error(err);
         setComments(previous);

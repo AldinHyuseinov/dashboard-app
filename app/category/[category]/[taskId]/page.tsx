@@ -1,7 +1,7 @@
 // app/category/[category]/[taskId]/page.tsx
-import { prisma } from "@/lib/prisma";
 import { getActor } from "@/lib/session";
 import { tasks } from "@/lib/tasks";
+import { comments } from "@/lib/comments";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { PdfPreviewLarge } from "@/components/task/FilePreview";
@@ -23,15 +23,7 @@ export default async function TaskDetailPage({
   const task = await tasks.get(actor, taskId);
   if (!task) return notFound();
 
-  // Comments move into the Comments module in ticket 04.
-  const comments = await prisma.comment.findMany({
-    where: { taskId },
-    orderBy: { createdAt: "asc" },
-    include: {
-      user: { select: { name: true } },
-      reactions: { include: { user: { select: { name: true } } } },
-    },
-  });
+  const taskComments = await comments.list(actor, taskId);
 
   const isOwner = task.userId === actor.id;
 
@@ -153,8 +145,7 @@ export default async function TaskDetailPage({
         <TaskCommentsSection
           taskId={task.id}
           taskOwnerId={task.userId}
-          initialComments={comments}
-          category={category}
+          initialComments={taskComments}
           currentUserId={actor.id}
         />
       </div>
