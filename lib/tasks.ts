@@ -1,6 +1,7 @@
 import z from "zod";
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
+import { recordActivity, recordTaskDeleted } from "@/lib/activity";
 import { isCategory } from "@/lib/categories";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { changeTaskFiles, TaskFilesRefused } from "@/lib/files";
@@ -92,10 +93,11 @@ export function createTasks({ notifications }: TaskDeps) {
             updatedAt: input.now,
             user: { connect: { id: actor.id } },
           },
-          select: { id: true, category: true },
+          select: { id: true, title: true, category: true },
         });
         await changeTaskFiles(tx, actor, { taskId: created.id, addedFileIds: input.fileIds });
-        return created;
+        await recordActivity(tx, actor, { type: "task-created", task: created, now: input.now });
+        return { id: created.id, category: created.category };
       });
     } catch (error) {
       return saveFailure(error, "Task create failed:");
@@ -135,15 +137,17 @@ export function createTasks({ notifications }: TaskDeps) {
           addedFileIds: input.addedFileIds,
           removedFileIds: input.removedFileIds,
         });
-        return tx.task.update({
+        const edited = await tx.task.update({
           where: { id: input.taskId },
           data: {
             title: text.data.title,
             description: text.data.description,
             updatedAt: input.now,
           },
-          select: { id: true, category: true },
+          select: { id: true, title: true, category: true },
         });
+        await recordActivity(tx, actor, { type: "task-edited", task: edited, now: input.now });
+        return { id: edited.id, category: edited.category };
       });
     } catch (error) {
       return saveFailure(error, "Task edit failed:");
@@ -153,15 +157,24 @@ export function createTasks({ notifications }: TaskDeps) {
     return { ok: true, task };
   }
 
-  /** Deletes a Task with its files and Comments. Only the Task Owner may delete a Task. */
+  /**
+   * Deletes a Task with its files and Comments. Its Task Activities stay in
+   * the Feed under its last title. Only the Task Owner may delete a Task.
+   */
   async function remove(
     actor: Actor,
-    taskId: string,
+    { taskId, now }: { taskId: string; now: Date },
   ): Promise<TaskResult> {
     const owned = await findOwnTask(actor, taskId, ONLY_THE_OWNER_DELETES);
     if (!owned.ok) return owned;
 
-    await prisma.task.delete({ where: { id: taskId } });
+    await prisma.$transaction(async (tx) => {
+      const deleted = await tx.task.delete({
+        where: { id: taskId },
+        select: { id: true, title: true, category: true },
+      });
+      await recordTaskDeleted(tx, actor, { task: deleted, now });
+    });
 
     const { id, category } = owned.task;
     await notifications.notify(actor, { type: "task-deleted", category });
@@ -186,8 +199,12 @@ export function createTasks({ notifications }: TaskDeps) {
     const result = { ok: true as const, task: { id: task.id, category: task.category } };
     if (task.isDone === isDone) return result;
 
-    await prisma.task.update({ where: { id: taskId }, data: { isDone, updatedAt: now } });
-    await notifications.notify(actor, { type: isDone ? "task-done" : "task-not-done", task });
+    const type = isDone ? "task-done" : "task-not-done";
+    await prisma.$transaction(async (tx) => {
+      await tx.task.update({ where: { id: taskId }, data: { isDone, updatedAt: now } });
+      await recordActivity(tx, actor, { type, task, now });
+    });
+    await notifications.notify(actor, { type, task });
     return result;
   }
 

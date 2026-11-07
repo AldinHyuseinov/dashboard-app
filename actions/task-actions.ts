@@ -37,7 +37,7 @@ export async function submitTaskAction(
 export async function deleteTask(taskId: string) {
   const actor = await requireActor();
 
-  const result = await tasks.delete(actor, taskId);
+  const result = await tasks.delete(actor, { taskId, now: new Date() });
   if (!result.ok) throw new Error(result.errors.form);
 
   revalidatePath(boardPath(result.task.category));

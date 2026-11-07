@@ -1,22 +1,43 @@
 import Alert from "@/components/notification/Alert";
+import ActivityFeed from "@/components/feed/ActivityFeed";
+import Pagination from "@/components/Pagination";
+import { activity } from "@/lib/activity";
+import { getActor } from "@/lib/session";
 import { Metadata } from "next";
-import Image from "next/image";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-  title: "Avexim Communication | Начало",
+  title: "Avexim Communication | Активност",
 };
 
-export default function Home() {
+/** The Activity Feed: the first screen after signing in. */
+export default async function Home(props: { searchParams: Promise<{ page?: string }> }) {
+  const actor = await getActor();
+  if (!actor) {
+    redirect("/login?not-authorized=true");
+  }
+
+  const searchParams = await props.searchParams;
+  const feed = await activity.feed(actor, { page: Number(searchParams.page) });
+
   return (
-    <main className="w-full flex flex-col items-center mt-2">
+    <main className="w-full max-w-3xl mx-auto mt-2 px-2 flex flex-col">
       <Suspense fallback={null}>
         <Alert />
       </Suspense>
 
-      <section className="bg-gray-200">
-        <Image src="/banner.jpg" alt="Vineyard landscape" width={1280} height={300} />
-      </section>
+      <div className="flex justify-center items-center mb-2 border-b border-primary-gold p-1">
+        <h1 className="text-3xl font-bold text-tertiary-brown text-center">Активност</h1>
+      </div>
+
+      <ActivityFeed items={feed.items} />
+
+      <Pagination
+        currentPage={feed.currentPage}
+        totalPages={feed.totalPages}
+        pageHref={(page) => `/?page=${page}`}
+      />
     </main>
   );
 }

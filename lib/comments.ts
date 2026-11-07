@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
+import { recordActivity } from "@/lib/activity";
 import { REACTION_EMOJIS } from "@/lib/constants";
 import {
   notifications as defaultNotifications,
@@ -58,16 +59,25 @@ export function createComments({ notifications }: CommentDeps) {
     if (answered && answered.taskId !== task.id) return { ok: false, error: REPLY_ON_ANOTHER_TASK };
     const parentId = answered ? (answered.parentId ?? answered.id) : null;
 
-    const comment = await prisma.comment.create({
-      data: {
-        text,
-        taskId: task.id,
-        userId: actor.id,
-        parentId,
-        answersId: answered?.id ?? null,
-        createdAt: input.now,
-      },
-      select: { id: true },
+    const comment = await prisma.$transaction(async (tx) => {
+      const created = await tx.comment.create({
+        data: {
+          text,
+          taskId: task.id,
+          userId: actor.id,
+          parentId,
+          answersId: answered?.id ?? null,
+          createdAt: input.now,
+        },
+        select: { id: true },
+      });
+      await recordActivity(tx, actor, {
+        type: answered ? "reply-posted" : "comment-posted",
+        task,
+        commentId: created.id,
+        now: input.now,
+      });
+      return created;
     });
 
     await notifications.notify(

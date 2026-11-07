@@ -66,6 +66,14 @@ export function getCategoryLabel(slug: string): string | undefined {
   return LABELS.get(slug);
 }
 
+/**
+ * The label to show for a Task's stored Category. Falls back to the stored
+ * value when it isn't a Category, so a stray legacy value stays readable.
+ */
+export function categoryLabelOrSlug(slug: string): string {
+  return LABELS.get(slug) ?? slug;
+}
+
 /** Whether Tasks can be posted into and listed under `slug`. */
 export function isCategory(slug: string): boolean {
   return LABELS.has(slug);

@@ -6,6 +6,10 @@ import { useState } from "react";
 
 const categoryHref = (slug: string) => `/category/${slug}`;
 
+/** The Activity Feed, the home screen. */
+const FEED_HREF = "/";
+const FEED_LABEL = "Активност";
+
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
@@ -28,6 +32,13 @@ export default function Navigation() {
 
       {/* --- DESKTOP NAV --- */}
       <nav className="hidden md:flex border border-gray-400 rounded-full p-1 mt-2 bg-white flex-wrap justify-center items-center gap-2 shadow-sm">
+        <Link
+          href={FEED_HREF}
+          className="bg-tertiary-brown text-white p-1 px-4 rounded-full font-bold text-sm tracking-wider hover:bg-secondary-gold-dark transition-colors shadow-sm cursor-pointer"
+        >
+          {FEED_LABEL}
+        </Link>
+
         {tree.map((item) =>
           item.kind === "group" ? (
             // A Category Group is a heading, not a link: it has no page of its own.
@@ -74,6 +85,14 @@ export default function Navigation() {
           ${isMobileMenuOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-4 pointer-events-none"}
         `}
       >
+        <Link
+          href={FEED_HREF}
+          onClick={closeAll}
+          className="block w-full bg-tertiary-brown text-white p-2 rounded-xl font-bold text-sm tracking-wider text-center shadow-sm hover:bg-secondary-gold-dark transition-colors"
+        >
+          {FEED_LABEL}
+        </Link>
+
         {tree.map((item) =>
           item.kind === "group" ? (
             <div key={item.label} className="w-full">

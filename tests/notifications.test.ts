@@ -279,7 +279,7 @@ describe("Notifications", () => {
         removedFileIds: [],
         now: MONDAY_10AM,
       });
-      await tasks.delete(maria, created.task.id);
+      await tasks.delete(maria, { taskId: created.task.id, now: MONDAY_10AM });
 
       const everyoneElse = ["georgi@avexim.test", "ivan@avexim.test"];
       expect(recipients()).toEqual([everyoneElse, everyoneElse, everyoneElse]);

@@ -5,6 +5,7 @@ import { TaskWithFiles } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Alert from "../notification/Alert";
+import Pagination from "../Pagination";
 
 export default function TaskBoard({
   initialTasks,
@@ -50,39 +51,11 @@ export default function TaskBoard({
         )}
       </div>
 
-      {/* --- 2. ADDED: Pagination Navigation Bar --- */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-1 mb-1 pt-1 border-t border-gray-100">
-          {/* Previous Page Link */}
-          <Link
-            href={`/category/${category}?page=${currentPage - 1}`}
-            className={`px-2 py-1.5 border rounded-md text-xs font-bold transition-all ${
-              currentPage <= 1
-                ? "pointer-events-none opacity-40 border-gray-200 text-gray-400"
-                : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:border-primary-gold"
-            }`}
-          >
-            ◄
-          </Link>
-
-          {/* Page Indicator */}
-          <span className="text-xs font-bold text-gray-500 tracking-wider">
-            Страница {currentPage} от {totalPages}
-          </span>
-
-          {/* Next Page Link */}
-          <Link
-            href={`/category/${category}?page=${currentPage + 1}`}
-            className={`px-2 py-1.5 border rounded-md text-xs font-bold transition-all ${
-              currentPage >= totalPages
-                ? "pointer-events-none opacity-40 border-gray-200 text-gray-400"
-                : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:border-primary-gold"
-            }`}
-          >
-            ►
-          </Link>
-        </div>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageHref={(page) => `/category/${category}?page=${page}`}
+      />
     </>
   );
 }

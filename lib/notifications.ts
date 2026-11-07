@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
-import { getCategoryLabel } from "@/lib/categories";
+import { categoryLabelOrSlug } from "@/lib/categories";
 import { emailAdapter as defaultEmailAdapter } from "@/lib/email";
 import type { EmailAdapter } from "@/lib/email-adapter";
 
@@ -52,14 +52,6 @@ async function recipientEmails(actor: Actor, recipients: Recipients): Promise<st
     select: { email: true },
   });
   return users.map((user) => user.email);
-}
-
-/**
- * Category label for emails. Falls back to the stored value when it isn't a
- * Category, so a stray legacy value still produces a readable email.
- */
-function categoryLabelOrSlug(category: string): string {
-  return getCategoryLabel(category) ?? category;
 }
 
 const HTML_ESCAPES: Record<string, string> = {

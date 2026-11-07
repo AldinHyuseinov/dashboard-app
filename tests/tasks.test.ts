@@ -184,7 +184,7 @@ describe("Tasks", () => {
       await createUser("Maria");
       const { id } = await postTask(ivan, { category: "warehouse" });
 
-      const result = await tasks.delete(ivan, id);
+      const result = await tasks.delete(ivan, { taskId: id, now: MONDAY_10AM });
 
       expect(result).toEqual({ ok: true, task: { id, category: "warehouse" } });
       expect(await tasks.get(ivan, id)).toBeNull();
@@ -215,7 +215,7 @@ describe("Tasks", () => {
         now: MONDAY_10AM,
       });
 
-      const result = await tasks.delete(ivan, id);
+      const result = await tasks.delete(ivan, { taskId: id, now: MONDAY_10AM });
 
       expect(result.ok).toBe(true);
       expect(await tasks.get(ivan, id)).toBeNull();
@@ -227,7 +227,7 @@ describe("Tasks", () => {
       const maria = await createUser("Maria");
       const { id } = await postTask(ivan);
 
-      const result = await tasks.delete(maria, id);
+      const result = await tasks.delete(maria, { taskId: id, now: MONDAY_10AM });
 
       expect(result).toEqual({
         ok: false,
@@ -240,7 +240,7 @@ describe("Tasks", () => {
     it("reports a Task that no longer exists", async () => {
       const ivan = await createUser("Ivan");
 
-      expect(await tasks.delete(ivan, "missing-task")).toEqual({
+      expect(await tasks.delete(ivan, { taskId: "missing-task", now: MONDAY_10AM })).toEqual({
         ok: false,
         errors: { form: "Задачата не е намерена." },
       });
