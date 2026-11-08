@@ -16,12 +16,21 @@ export async function createUser(name: string, email = `${name.toLowerCase()}@av
  */
 export async function uploadFile(
   uploader: Actor,
-  { fileName = "договор.pdf", now = new Date("2026-11-02T08:00:00Z") } = {},
+  {
+    fileName = "договор.pdf",
+    contents = `contents of ${fileName}` as string | Uint8Array<ArrayBuffer>,
+    now = new Date("2026-11-02T08:00:00Z"),
+  } = {},
 ) {
   const result = await files.upload(uploader, {
-    file: new File([`contents of ${fileName}`], fileName, { type: "application/pdf" }),
+    file: new File([contents], fileName, { type: "application/pdf" }),
     now,
   });
   if (!result.ok) throw new Error(`Could not upload a file: ${result.error}`);
   return result.file;
+}
+
+/** Everything a successful `files.read` streams, as one Buffer. */
+export async function bytesOf(read: { body: ReadableStream<Uint8Array> }) {
+  return Buffer.from(await new Response(read.body).arrayBuffer());
 }

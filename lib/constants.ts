@@ -1,6 +1,11 @@
 export const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300MB Server-side limit as backup
 export const MAX_FILES = 10; // Max number of files allowed
 export const ITEMS_PER_PAGE = 5;
+/**
+ * What the upload picker offers: common image types, video and PDF. Leaving
+ * HEIC out makes iPhones convert their photos to JPEG before uploading.
+ */
+export const UPLOAD_ACCEPT = "image/jpeg,image/png,image/webp,image/gif,video/*,.pdf";
 /** How many Activities one page of the Activity Feed shows. */
 export const FEED_ITEMS_PER_PAGE = 20;
 /**

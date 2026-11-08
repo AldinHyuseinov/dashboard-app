@@ -38,8 +38,14 @@ export const ExistingFilePreview = ({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={fileUrl} alt={file.fileName} className="w-full object-cover" />
         ) : isVideo ? (
-          /* Render looping, muted video preview */
-          <video src={fileUrl} muted loop playsInline autoPlay className="w-full object-cover" />
+          // Only the start is fetched, for a still of the first frame (#t=0.1 makes iPhones show it).
+          <video
+            src={`${fileUrl}#t=0.1`}
+            muted
+            playsInline
+            preload="metadata"
+            className="w-full object-cover"
+          />
         ) : (
           <PdfPreview fileName={file.fileName} />
         )}

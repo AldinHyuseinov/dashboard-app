@@ -69,9 +69,11 @@ export default async function TaskDetailPage({
                         key={file.id}
                         className="w-full rounded-lg overflow-hidden border border-gray-200 bg-black"
                       >
+                        {/* Fetched in byte ranges as it plays; #t=0.1 shows the first frame on iPhones. */}
                         <video
-                          src={`/api/files/${file.id}`}
+                          src={`/api/files/${file.id}#t=0.1`}
                           controls
+                          playsInline
                           preload="metadata"
                           className="w-full h-full animate-all"
                         />

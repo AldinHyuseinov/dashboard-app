@@ -12,14 +12,37 @@ export type UploadResult =
   | { ok: true; file: { id: string } }
   | { ok: false; reason: "invalid" | "processing-failed"; error: string };
 
-export type DownloadResult =
-  | { ok: true; file: { fileName: string; fileType: string; data: Uint8Array<ArrayBuffer> } }
-  | { ok: false; reason: "unauthenticated" | "not-found" };
+/**
+ * Which bytes to read, as a Range request asks for them: from `start` to
+ * `end` inclusive (to the last byte when `end` is left out, or runs past
+ * it), or the last `suffix` bytes.
+ */
+export type RangeRequest = { start: number; end?: number } | { suffix: number };
+
+/** Bytes `start` to `end` of a file, both inclusive. */
+export type ByteRange = { start: number; end: number };
+
+/** What is known about a stored file without reading its bytes. */
+export type FileInfo = { fileName: string; fileType: string; size: number };
+
+export type ReadResult =
+  | {
+      ok: true;
+      file: FileInfo;
+      /** The bytes `body` holds, or null when it holds the whole file. */
+      range: ByteRange | null;
+      body: ReadableStream<Uint8Array>;
+    }
+  | { ok: false; reason: "unauthenticated" | "not-found" }
+  | { ok: false; reason: "unsatisfiable"; size: number };
 
 export type FileDeps = {
   /** Converts a video to mp4, at most 5 minutes long. Throws if it can't. */
   compressVideo: (video: Buffer) => Promise<Buffer>;
 };
+
+/** How many bytes one query reads, so serving a file never holds all of it in memory. */
+const SLICE_BYTES = 1024 * 1024;
 
 /** Uploads never attached to a Task are deleted once they are this old. */
 const ABANDONED_AFTER_MS = 24 * 60 * 60 * 1000;
@@ -92,19 +115,73 @@ export function createFiles({ compressVideo }: FileDeps) {
     return { ok: true, file: saved };
   }
 
-  /** A file's name, type and bytes. Only signed-in users may download files. */
-  async function download(actor: Actor | null, fileId: string): Promise<DownloadResult> {
+  /**
+   * A file's name, type and size, and a stream of its bytes: all of them,
+   * or only those `range` asks for. Only signed-in users may read files.
+   * The bytes are read a slice at a time as the stream is consumed.
+   */
+  async function read(
+    actor: Actor | null,
+    fileId: string,
+    { range }: { range?: RangeRequest } = {},
+  ): Promise<ReadResult> {
     if (!actor) return { ok: false, reason: "unauthenticated" };
 
-    const file = await prisma.taskFile.findUnique({
-      where: { id: fileId },
-      select: { fileName: true, fileType: true, data: true },
-    });
+    const [file] = await prisma.$queryRaw<FileInfo[]>`
+      SELECT [fileName], [fileType], CAST(DATALENGTH([data]) AS INT) AS [size]
+      FROM [dbo].[TaskFile] WHERE [id] = ${fileId}`;
     if (!file) return { ok: false, reason: "not-found" };
-    return { ok: true, file };
+
+    const selected = range ? resolveRange(range, file.size) : { start: 0, end: file.size - 1 };
+    if (!selected) return { ok: false, reason: "unsatisfiable", size: file.size };
+
+    return {
+      ok: true,
+      file,
+      range: range ? selected : null,
+      body: streamBytes(fileId, selected),
+    };
   }
 
-  return { upload, download };
+  return { upload, read };
+}
+
+/** The bytes a Range request selects from a file of `size` bytes, or null if it selects none. */
+function resolveRange(range: RangeRequest, size: number): ByteRange | null {
+  if ("suffix" in range) {
+    if (range.suffix <= 0 || size === 0) return null;
+    return { start: Math.max(0, size - range.suffix), end: size - 1 };
+  }
+  if (range.start >= size) return null;
+  return { start: range.start, end: Math.min(range.end ?? size - 1, size - 1) };
+}
+
+/**
+ * Streams bytes `start` to `end` of a stored file, reading one slice per
+ * query only when the consumer asks for more. An `end` before `start`
+ * streams nothing (an empty file).
+ */
+function streamBytes(fileId: string, { start, end }: ByteRange): ReadableStream<Uint8Array> {
+  let next = start;
+  return new ReadableStream<Uint8Array>(
+    {
+      async pull(controller) {
+        if (next > end) return controller.close();
+        const length = Math.min(SLICE_BYTES, end - next + 1);
+        // SQL Server's SUBSTRING counts from 1.
+        const [row] = await prisma.$queryRaw<{ slice: Uint8Array }[]>`
+          SELECT SUBSTRING([data], ${next + 1}, ${length}) AS [slice]
+          FROM [dbo].[TaskFile] WHERE [id] = ${fileId}`;
+        if (!row || row.slice.length !== length) {
+          return controller.error(new Error(`File ${fileId} changed while it was being read.`));
+        }
+        controller.enqueue(new Uint8Array(row.slice));
+        next += length;
+      },
+    },
+    // Nothing is read until the consumer asks for it.
+    { highWaterMark: 0 },
+  );
 }
 
 /** Deletes files not attached to any Task that are more than 24 hours old at `now`. */

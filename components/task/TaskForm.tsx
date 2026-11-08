@@ -4,7 +4,7 @@ import { submitTaskAction } from "@/actions/task-actions";
 import { SelectedFile, TaskFormProps } from "@/lib/types";
 import { useEffect, useState, useActionState, useRef, startTransition } from "react";
 import SubmitButton from "../SubmitButton";
-import { MAX_FILES } from "@/lib/constants";
+import { MAX_FILES, UPLOAD_ACCEPT } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { ExistingFilePreview, LocalFilePreview } from "./FilePreview";
 
@@ -209,7 +209,7 @@ export default function TaskForm({ category, existingTask }: Omit<TaskFormProps,
                 type="file"
                 ref={fileInputRef}
                 multiple
-                accept="image/*,.pdf"
+                accept={UPLOAD_ACCEPT}
                 onChange={handleFileChange}
                 className="text-sm text-gray-500 file:mr-8 file:p-2 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-primary-gold hover:file:bg-yellow-100 cursor-pointer w-full border rounded-md mb-4"
               />

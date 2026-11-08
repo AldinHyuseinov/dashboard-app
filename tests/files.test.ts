@@ -7,7 +7,7 @@ import { createFiles } from "@/lib/files";
 import { MAX_FILE_SIZE } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
-import { createUser, uploadFile } from "./support/fixtures";
+import { bytesOf, createUser, uploadFile } from "./support/fixtures";
 
 const MONDAY_8AM = new Date("2026-11-02T08:00:00Z");
 const MONDAY_9AM = new Date("2026-11-02T09:00:00Z");
@@ -80,13 +80,14 @@ describe("Files", () => {
       expect(upload).toMatchObject({ ok: true });
       if (!upload.ok) return;
 
-      const download = await files.download(maria, upload.file.id);
-      expect(download).toMatchObject({
+      const read = await files.read(maria, upload.file.id);
+      expect(read).toMatchObject({
         ok: true,
         file: { fileName: "Договор за доставка.pdf", fileType: "application/pdf" },
+        range: null,
       });
-      if (!download.ok) return;
-      expect(Buffer.from(download.file.data).toString()).toBe("съдържание");
+      if (!read.ok) return;
+      expect((await bytesOf(read)).toString()).toBe("съдържание");
     });
 
     it("turns an image into webp at most 1280px wide", async () => {
@@ -103,10 +104,10 @@ describe("Files", () => {
       });
       if (!upload.ok) throw new Error(upload.error);
 
-      const download = await files.download(ivan, upload.file.id);
-      if (!download.ok) throw new Error(download.reason);
-      expect(download.file).toMatchObject({ fileName: "снимка.png", fileType: "image/webp" });
-      const stored = await sharp(download.file.data).metadata();
+      const read = await files.read(ivan, upload.file.id);
+      if (!read.ok) throw new Error(read.reason);
+      expect(read.file).toMatchObject({ fileName: "снимка.png", fileType: "image/webp" });
+      const stored = await sharp(await bytesOf(read)).metadata();
       expect(stored).toMatchObject({ format: "webp", width: 1280, height: 640 });
     });
 
@@ -119,8 +120,8 @@ describe("Files", () => {
       });
       if (!upload.ok) throw new Error(upload.error);
 
-      const download = await files.download(ivan, upload.file.id);
-      expect(download).toMatchObject({ ok: true, file: { fileType: "image/png" } });
+      const read = await files.read(ivan, upload.file.id);
+      expect(read).toMatchObject({ ok: true, file: { fileType: "image/png" } });
     });
 
     it("turns a video into mp4, renaming it to .mp4", async () => {
@@ -132,13 +133,13 @@ describe("Files", () => {
       });
       if (!upload.ok) throw new Error(upload.error);
 
-      const download = await files.download(ivan, upload.file.id);
-      if (!download.ok) throw new Error(download.reason);
-      expect(download.file).toMatchObject({
+      const read = await files.read(ivan, upload.file.id);
+      if (!read.ok) throw new Error(read.reason);
+      expect(read.file).toMatchObject({
         fileName: "клип.от.събитието.mp4",
         fileType: "video/mp4",
       });
-      expect(Buffer.from(download.file.data).toString()).toBe("compressed mp4");
+      expect((await bytesOf(read)).toString()).toBe("compressed mp4");
     });
 
     it("refuses a video it can't convert, with the 5-minute limit in the error", async () => {
@@ -190,18 +191,124 @@ describe("Files", () => {
     });
   });
 
-  describe("downloading", () => {
+  describe("reading", () => {
+    // 2.5 MiB, so a read can span more than one slice of the stored data.
+    const contents = new Uint8Array(2.5 * 1024 * 1024).map((_, i) => i % 251);
+    const size = contents.length;
+    const slice = (start: number, end: number) => Buffer.from(contents.subarray(start, end + 1));
+
     it("is refused without a session", async () => {
       const ivan = await createUser("Ivan");
       const { id } = await uploadFile(ivan);
 
-      expect(await files.download(null, id)).toEqual({ ok: false, reason: "unauthenticated" });
+      expect(await files.read(null, id)).toEqual({ ok: false, reason: "unauthenticated" });
+      expect(await files.read(null, id, { range: { start: 0, end: 1 } })).toEqual({
+        ok: false,
+        reason: "unauthenticated",
+      });
+    });
+
+    it("streams the whole file when no range is asked for", async () => {
+      const ivan = await createUser("Ivan");
+      const { id } = await uploadFile(ivan, { fileName: "запис.pdf", contents });
+
+      const read = await files.read(ivan, id);
+
+      if (!read.ok) throw new Error(read.reason);
+      expect(read).toMatchObject({ file: { fileName: "запис.pdf", size }, range: null });
+      expect((await bytesOf(read)).equals(Buffer.from(contents))).toBe(true);
+    });
+
+    it("reads the first two bytes, as an iPhone asks before playing a video", async () => {
+      const ivan = await createUser("Ivan");
+      const { id } = await uploadFile(ivan, { contents });
+
+      const read = await files.read(ivan, id, { range: { start: 0, end: 1 } });
+
+      if (!read.ok) throw new Error(read.reason);
+      expect(read).toMatchObject({ file: { size }, range: { start: 0, end: 1 } });
+      expect(await bytesOf(read)).toEqual(slice(0, 1));
+    });
+
+    it("reads a range from the middle that spans slices of the stored data", async () => {
+      const ivan = await createUser("Ivan");
+      const { id } = await uploadFile(ivan, { contents });
+
+      const read = await files.read(ivan, id, { range: { start: 1000, end: 2_100_000 } });
+
+      if (!read.ok) throw new Error(read.reason);
+      expect(read.range).toEqual({ start: 1000, end: 2_100_000 });
+      expect((await bytesOf(read)).equals(slice(1000, 2_100_000))).toBe(true);
+    });
+
+    it("reads from a byte to the end of the file", async () => {
+      const ivan = await createUser("Ivan");
+      const { id } = await uploadFile(ivan, { contents });
+
+      const read = await files.read(ivan, id, { range: { start: size - 10 } });
+
+      if (!read.ok) throw new Error(read.reason);
+      expect(read.range).toEqual({ start: size - 10, end: size - 1 });
+      expect(await bytesOf(read)).toEqual(slice(size - 10, size - 1));
+    });
+
+    it("reads the last bytes of the file", async () => {
+      const ivan = await createUser("Ivan");
+      const { id } = await uploadFile(ivan, { contents });
+
+      const read = await files.read(ivan, id, { range: { suffix: 500 } });
+
+      if (!read.ok) throw new Error(read.reason);
+      expect(read.range).toEqual({ start: size - 500, end: size - 1 });
+      expect(await bytesOf(read)).toEqual(slice(size - 500, size - 1));
+    });
+
+    it("stops a range that runs past the end at the last byte", async () => {
+      const ivan = await createUser("Ivan");
+      const { id } = await uploadFile(ivan, { contents: new Uint8Array([1, 2, 3, 4]) });
+
+      const read = await files.read(ivan, id, { range: { start: 2, end: 99 } });
+
+      if (!read.ok) throw new Error(read.reason);
+      expect(read.range).toEqual({ start: 2, end: 3 });
+      expect(await bytesOf(read)).toEqual(Buffer.from([3, 4]));
+    });
+
+    it("reads the whole file when asked for more last bytes than it has", async () => {
+      const ivan = await createUser("Ivan");
+      const { id } = await uploadFile(ivan, { contents: new Uint8Array([1, 2, 3, 4]) });
+
+      const read = await files.read(ivan, id, { range: { suffix: 10 } });
+
+      if (!read.ok) throw new Error(read.reason);
+      expect(read.range).toEqual({ start: 0, end: 3 });
+      expect(await bytesOf(read)).toEqual(Buffer.from([1, 2, 3, 4]));
+    });
+
+    it("can't satisfy a range that starts past the end, and says how big the file is", async () => {
+      const ivan = await createUser("Ivan");
+      const { id } = await uploadFile(ivan, { contents: new Uint8Array([1, 2, 3, 4]) });
+
+      expect(await files.read(ivan, id, { range: { start: 4 } })).toEqual({
+        ok: false,
+        reason: "unsatisfiable",
+        size: 4,
+      });
+      expect(await files.read(ivan, id, { range: { suffix: 0 } })).toEqual({
+        ok: false,
+        reason: "unsatisfiable",
+        size: 4,
+      });
     });
 
     it("reports a file that doesn't exist", async () => {
       const ivan = await createUser("Ivan");
 
-      expect(await files.download(ivan, "missing-file")).toEqual({
+      expect(await files.read(ivan, "missing-file")).toEqual({
+        ok: false,
+        reason: "not-found",
+      });
+      expect(await files.read(ivan, "missing-file", { range: { start: 0, end: 1 } })).toEqual({
         ok: false,
         reason: "not-found",
       });
@@ -374,8 +481,8 @@ describe("Files", () => {
         now: TUESDAY_9AM,
       });
 
-      expect(await files.download(ivan, abandoned.id)).toEqual({ ok: false, reason: "not-found" });
-      expect(await files.download(ivan, recent.id)).toMatchObject({ ok: true });
+      expect(await files.read(ivan, abandoned.id)).toEqual({ ok: false, reason: "not-found" });
+      expect(await files.read(ivan, recent.id)).toMatchObject({ ok: true });
     });
 
     it("keeps old files that are attached to a Task", async () => {
@@ -385,7 +492,7 @@ describe("Files", () => {
 
       await uploadFile(ivan, { now: TUESDAY_9AM });
 
-      expect(await files.download(ivan, attached.id)).toMatchObject({ ok: true });
+      expect(await files.read(ivan, attached.id)).toMatchObject({ ok: true });
     });
 
     it("keeps an unattached upload that is less than 24 hours old", async () => {
@@ -394,7 +501,7 @@ describe("Files", () => {
 
       await uploadFile(ivan, { now: TUESDAY_7AM });
 
-      expect(await files.download(ivan, upload.id)).toMatchObject({ ok: true });
+      expect(await files.read(ivan, upload.id)).toMatchObject({ ok: true });
     });
 
     it("also deletes old unattached files from before uploaders were recorded", async () => {
@@ -411,7 +518,7 @@ describe("Files", () => {
 
       await uploadFile(ivan, { now: TUESDAY_9AM });
 
-      expect(await files.download(ivan, legacy.id)).toEqual({ ok: false, reason: "not-found" });
+      expect(await files.read(ivan, legacy.id)).toEqual({ ok: false, reason: "not-found" });
     });
   });
 });
