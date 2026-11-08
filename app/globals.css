@@ -4,7 +4,7 @@
  * Design tokens, from the approved prototype (ticket 14). Defined once here
  * and used through Tailwind utilities: `bg-surface`, `text-ink-2`,
  * `border-line`, `text-display`, `rounded-card`, `p-2` (16px) and so on.
- * Dark values follow the device setting (see the media query below).
+ * Dark values apply in dark appearance (see the `dark` variant below).
  */
 @theme {
   /* Colour: bg 60%, surface 30%, gold 10%. */
@@ -61,15 +61,27 @@
   /* Shape: tiles and inputs, lists and cards. Buttons and chips are rounded-full. */
   --radius-tile: 12px;
   --radius-card: 16px;
-
-  /* Kept for screens not yet redesigned (tickets 16-18). */
-  --color-primary-gold: #cda349;
-  --color-secondary-gold-dark: #a38036;
-  --color-tertiary-brown: #4a3b22;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+/*
+ * Dark appearance: the device's setting, unless this device chose light or
+ * dark in the Profile (`<html data-theme>`, set by the root layout from the
+ * theme cookie). Also the `dark:` utility variant.
+ */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+}
+
+:root {
+  @variant dark {
+    color-scheme: dark;
     --color-bg: #14110c;
     --color-surface: #1e1912;
     --color-hover: #251f17;
@@ -91,25 +103,12 @@
     --color-vine-tint: #25301a;
     --color-tint: #33291a;
     --color-error: #f08a8f;
-
-    /*
-     * Bridge for screens not yet redesigned (tickets 16-18): they paint with
-     * white and grey, so in dark appearance those turn into the dark tokens
-     * and stay readable. Remove once every screen uses the tokens above.
-     */
-    --color-white: var(--color-surface);
-    --color-gray-50: #221c14;
-    --color-gray-100: #2a2319;
-    --color-gray-200: var(--color-line);
-    --color-gray-300: #4a3f2f;
-    --color-gray-400: #958871;
-    --color-gray-500: #a39780;
-    --color-gray-600: var(--color-ink-2);
-    --color-gray-700: #d6ccb9;
-    --color-gray-800: var(--color-ink);
-    --color-gray-900: #faf6ee;
-    --color-tertiary-brown: var(--color-ink);
   }
+}
+
+/* A chosen light appearance keeps native controls and scrollbars light too. */
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 @layer base {

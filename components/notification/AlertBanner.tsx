@@ -1,29 +1,30 @@
 "use client";
 
 import { AlertBannerProps } from "@/lib/types";
+import { CloseIcon } from "@/components/shell/icons";
 
+const TONES = {
+  warning: "bg-tint text-ink",
+  success: "bg-vine-tint text-ink",
+  error: "border border-error bg-surface font-semibold text-error",
+} as const;
+
+/** A one-line message over a screen, which the person may close. */
 export default function AlertBanner({ type = "warning", children, onClose }: AlertBannerProps) {
-  const colorStyles = {
-    warning: "bg-yellow-50 border-yellow-300 text-yellow-800",
-    success: "bg-green-50 border-green-300 text-green-800",
-    error: "bg-red-50 border-red-300 text-red-800",
-  };
-
   return (
     <div
-      className={`mb-2 p-3 border text-sm md:text-base rounded-md shadow-sm flex items-center justify-between gap-2 ${colorStyles[type]}`}
+      role={type === "error" ? "alert" : "status"}
+      className={`flex w-full items-center justify-between gap-1 rounded-tile py-1 pl-2 text-secondary ${onClose ? "pr-0.5" : "pr-2"} ${TONES[type]}`}
     >
-      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-4 text-center">{children}</div>
-
-      {/* Conditionally render the close button if onClose is provided */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{children}</div>
       {onClose && (
         <button
-          onClick={onClose}
-          className="px-4 font-bold opacity-60 hover:opacity-100 transition-opacity cursor-pointer leading-none"
-          title="Затвори"
           type="button"
+          onClick={onClose}
+          aria-label="Затвори"
+          className="flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-full text-ink-2 hover:text-ink"
         >
-          ✕
+          <CloseIcon size={18} />
         </button>
       )}
     </div>

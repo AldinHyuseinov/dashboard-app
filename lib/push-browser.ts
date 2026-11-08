@@ -75,3 +75,17 @@ function base64UrlBytes(base64Url: string): Uint8Array<ArrayBuffer> {
     .replace(/_/g, "/");
   return Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
 }
+
+/**
+ * Drops this browser's push subscription, on signing out. The server forgets
+ * the device by itself when the session ends; this leaves nothing behind in
+ * the browser for the next person. Never fails: signing out goes ahead.
+ */
+export async function forgetPushSubscription(): Promise<void> {
+  try {
+    if (!browserSupportsPush()) return;
+    await (await currentSubscription())?.unsubscribe();
+  } catch {
+    // Nothing more to do: the server no longer pushes to it.
+  }
+}

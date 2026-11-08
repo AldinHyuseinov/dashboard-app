@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { AUTH_ERROR, codeErrorMessage, isCode, NOT_A_CODE } from "@/lib/code-errors";
 import { CODE_MINUTES } from "@/lib/code-email";
-import { passwordProblems } from "@/lib/password-rules";
+import { PASSWORD_RULES_SUMMARY, passwordProblems } from "@/lib/password-rules";
 import SubmitButton from "../SubmitButton";
+import { FormError, FormNotice } from "./FormMessage";
 import TextField from "./TextField";
 
 type CodeState = {
@@ -96,10 +97,10 @@ export default function ForgotPasswordForm() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p role="status" className="rounded-tile bg-tint p-2 text-secondary text-ink">
+      <FormNotice>
         Ако <strong>{email}</strong> е имейл на служебен профил, изпратихме на него 6-цифрен код.
         Кодът е валиден {CODE_MINUTES} минути.
-      </p>
+      </FormNotice>
 
       {codeState.errors?.form && <FormError>{codeState.errors.form}</FormError>}
 
@@ -131,7 +132,7 @@ export default function ForgotPasswordForm() {
           error={codeState.errors?.confirmPassword}
         />
         <p className="text-meta text-ink-2">
-          8 до 20 символа, с главна и малка буква, цифра и специален символ (!@#$%^&*).
+          {PASSWORD_RULES_SUMMARY}
         </p>
         <SubmitButton className="pt-1" pendingText="Запазване…" defaultText="Запази новата парола" />
       </form>
@@ -152,17 +153,6 @@ export default function ForgotPasswordForm() {
       </div>
       <BackToSignIn />
     </div>
-  );
-}
-
-function FormError({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      role="alert"
-      className="rounded-tile border border-error p-2 text-secondary font-semibold text-error"
-    >
-      {children}
-    </p>
   );
 }
 

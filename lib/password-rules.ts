@@ -12,3 +12,7 @@ const RULES: { passes: (password: string) => boolean; problem: string }[] = [
 export function passwordProblems(password: string): string[] {
   return RULES.filter((rule) => !rule.passes(password)).map((rule) => rule.problem);
 }
+
+/** The rules in one line, shown under a new password field. */
+export const PASSWORD_RULES_SUMMARY =
+  "8 до 20 символа, с главна и малка буква, цифра и специален символ (!@#$%^&*).";

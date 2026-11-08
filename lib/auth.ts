@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { emailOTP } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware, isAPIError } from "better-auth/api";
 import { prisma } from "./prisma";
 import { emailAdapter as defaultEmailAdapter } from "./email";
 import type { EmailAdapter } from "./email-adapter";
@@ -68,8 +68,23 @@ export function createAuth({ emailAdapter }: AuthDeps) {
         }
         if (ctx.path === "/change-password") {
           refuseWeakPassword(ctx.body?.newPassword);
-          // A password change always signs out the person's other devices.
-          return { context: { body: { ...ctx.body, revokeOtherSessions: true } } };
+          // better-auth's own revoking ends every session, this device's too,
+          // and its push device with it. The hook below signs out the others.
+          return { context: { body: { ...ctx.body, revokeOtherSessions: false } } };
+        }
+      }),
+      after: createAuthMiddleware(async (ctx) => {
+        // A password change always signs out the person's other devices. This
+        // one keeps its session, so notifications stay on here.
+        if (ctx.path === "/change-password" && !isAPIError(ctx.context.returned)) {
+          const current = ctx.context.session;
+          if (!current) return;
+          const sessions = await ctx.context.internalAdapter.listSessions(current.user.id);
+          await ctx.context.internalAdapter.deleteSessions(
+            sessions
+              .filter((session) => session.token !== current.session.token)
+              .map((session) => session.token),
+          );
         }
       }),
     },

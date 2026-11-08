@@ -1,53 +1,11 @@
 import { Prisma } from "@/generated/prisma/client";
 import { ReactNode } from "react";
 import z from "zod";
-import { passwordProblems } from "./password-rules";
 
 export const loginSchema = z.object({
   email: z.email("Невалиден имейл адрес."),
   password: z.string().min(1, "Паролата е задължителна."),
 });
-
-export const profileUpdateSchema = z
-  .object({
-    name: z
-      .string("Името е задължително")
-      .min(2, "Името трябва да бъде поне 2 символа")
-      .max(30, "Името трябва да бъде по-малко от 30 символа")
-      .optional(),
-    email: z.email("Невалиден имейл адрес").optional(),
-    oldPassword: z.string().optional().or(z.literal("")),
-    newPassword: z.string().optional().or(z.literal("")),
-    confirmPassword: z.string().optional().or(z.literal("")),
-  })
-  .superRefine((data, ctx) => {
-    // Only run password validations if the user is trying to change it
-    if (data.newPassword) {
-      if (!data.oldPassword) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Въведете старата си парола",
-          path: ["oldPassword"],
-        });
-      }
-      for (const problem of passwordProblems(data.newPassword)) {
-        ctx.addIssue({ code: "custom", message: problem, path: ["newPassword"] });
-      }
-      if (data.newPassword !== data.confirmPassword) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Паролите не съвпадат",
-          path: ["confirmPassword"],
-        });
-      }
-    } else if (data.oldPassword) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Въведете нова парола",
-        path: ["newPassword"],
-      });
-    }
-  });
 
 export type LoginState = {
   errors?: {
@@ -116,20 +74,6 @@ export type TaskFormState = {
   };
   /** The Task just published, for the form to say so and link to it. */
   published?: { href: string; title: string };
-};
-
-export type ProfileFormState = {
-  /** The new address a code was sent to; the change waits for that code. */
-  pendingEmail?: string;
-  errors?: {
-    name?: string[];
-    email?: string[];
-    oldPassword?: string[];
-    newPassword?: string[];
-    confirmPassword?: string[];
-    form?: string;
-  };
-  success?: boolean;
 };
 
 export type ProcessFilesResult = {

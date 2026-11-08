@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { loginAction } from "@/actions/auth-actions";
 import SubmitButton from "../SubmitButton";
+import { FormError, FormNotice } from "./FormMessage";
 import TextField from "./TextField";
 
 export default function LoginForm() {
@@ -16,25 +17,18 @@ export default function LoginForm() {
   return (
     <div className="flex flex-col gap-3">
       {notAuthorized && (
-        <p role="status" className="rounded-tile bg-tint p-2 text-secondary text-ink">
+        <FormNotice>
           Трябва да се впишете, за да продължите.
-        </p>
+        </FormNotice>
       )}
 
       {passwordReset && (
-        <p role="status" className="rounded-tile bg-tint p-2 text-secondary text-ink">
+        <FormNotice>
           Паролата е сменена. Впишете се с новата парола.
-        </p>
+        </FormNotice>
       )}
 
-      {state?.errors?.form && (
-        <p
-          role="alert"
-          className="rounded-tile border border-error p-2 text-secondary font-semibold text-error"
-        >
-          {state.errors.form}
-        </p>
-      )}
+      {state?.errors?.form && <FormError>{state.errors.form}</FormError>}
 
       <form action={formAction} className="flex flex-col gap-3">
         <TextField

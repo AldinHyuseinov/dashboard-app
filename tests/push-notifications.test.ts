@@ -442,4 +442,55 @@ describe("Push notifications", () => {
       expect(emailed()).toEqual([["ivan@avexim.test"]]);
     });
   });
+
+  describe("changing the password", () => {
+    it("keeps push on the device it was changed on, and brings email back on the others", async () => {
+      const auth = createAuth({ emailAdapter: new InMemoryEmailAdapter() });
+      await auth.api.signUpEmail({
+        body: { name: "Ivan", email: "ivan@avexim.test", password: "Staro!123" },
+      });
+      const maria = await createUser("Maria");
+
+      /** Ivan signs in on a device and turns push on there; its headers and session. */
+      async function onDevice(name: string) {
+        const { headers: signedIn } = await auth.api.signInEmail({
+          body: { email: "ivan@avexim.test", password: "Staro!123" },
+          returnHeaders: true,
+        });
+        const device = sessionFrom(signedIn);
+        const session = await auth.api.getSession({ headers: device });
+        if (!session) throw new Error("Ivan is not signed in");
+        const ivan = { id: session.user.id, name: session.user.name };
+        await notifications.registerDevice(ivan, {
+          sessionId: session.session.id,
+          endpoint: `https://fcm.googleapis.com/fcm/send/ivans-${name}`,
+          keys: KEYS,
+          now: MONDAY_8AM,
+        });
+        return { device, ivan, sessionId: session.session.id };
+      }
+      const phone = await onDevice("phone");
+      const laptop = await onDevice("laptop");
+
+      await auth.api.changePassword({
+        headers: phone.device,
+        body: { currentPassword: "Staro!123", newPassword: "Novo!1234" },
+      });
+      await tasks.create(maria, {
+        title: "Инвентаризация",
+        description: "До края на месеца",
+        category: "warehouse",
+        fileIds: [],
+        now: MONDAY_10AM,
+      });
+
+      expect(await auth.api.getSession({ headers: phone.device })).not.toBeNull();
+      expect(await auth.api.getSession({ headers: laptop.device })).toBeNull();
+      expect(await notifications.sessionEndpoints(phone.ivan, phone.sessionId)).toEqual([
+        "https://fcm.googleapis.com/fcm/send/ivans-phone",
+      ]);
+      expect(pushedTo()).toEqual(["https://fcm.googleapis.com/fcm/send/ivans-phone"]);
+      expect(emailed()).toEqual([]);
+    });
+  });
 });

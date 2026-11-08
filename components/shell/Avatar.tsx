@@ -7,6 +7,8 @@ const SIZES = {
   md: "size-4 text-label lg:size-[36px]",
   /** The comment box, desktop only. */
   composer: "hidden size-[36px] text-label lg:flex",
+  /** The Profile's heading. */
+  lg: "size-7 text-body",
 } as const;
 
 /** A person's initials in a tinted circle. Decorative: their name is always written beside it. */

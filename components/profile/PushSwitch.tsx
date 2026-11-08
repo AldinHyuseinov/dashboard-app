@@ -5,14 +5,15 @@ import { browserSupportsPush, currentSubscription, turnOffPush, turnOnPush } fro
 
 type PushState = "checking" | "unsupported" | "blocked" | "off" | "on";
 
-/** What each state means for the person, under the switch. */
+/** What each state means for the person, and what they can do about it. */
 const HINTS: Record<PushState, string> = {
   checking: "Проверка…",
-  unsupported: "Този браузър не може да получава известия. Те идват по имейл.",
+  unsupported:
+    "Този браузър не може да получава известия, затова те идват по имейл. На iPhone добавете приложението към началния екран (Сподели → „Добави към началния екран“) и го отворете оттам.",
   blocked:
-    "Известията са блокирани за този сайт. Разрешете ги в настройките на браузъра и опитайте отново.",
-  off: "Известията идват по имейл.",
-  on: "Известията идват на това устройство, вместо по имейл.",
+    "Блокирани от браузъра. Известията идват по имейл. Разрешете известията за този сайт в настройките на браузъра и опитайте отново.",
+  off: "Изключени. Известията идват по имейл. Включете ги, за да идват на това устройство.",
+  on: "Включени. Известията идват на това устройство вместо по имейл.",
 };
 
 const FAILED = "Известията не се включиха. Опитайте отново.";
@@ -77,44 +78,42 @@ export default function PushSwitch({
   const usable = state === "on" || state === "off";
 
   return (
-    <section className="w-full px-8 pb-4 sm:max-w-md sm:px-0">
-      <div className="flex items-center justify-between gap-2 rounded-card border border-line bg-surface p-2">
-        <div className="flex flex-col">
-          <p id="push-switch-label" className="text-body font-semibold text-ink">
-            Известия на това устройство
+    <div className="flex items-start justify-between gap-2">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p id="push-switch-label" className="text-body font-semibold text-ink">
+          Известия на това устройство
+        </p>
+        <p id="push-switch-hint" className="text-meta text-ink-2">
+          {HINTS[state]}
+        </p>
+        {error && (
+          <p role="alert" className="text-meta font-semibold text-error">
+            {error}
           </p>
-          <p id="push-switch-hint" className="text-meta text-ink-2">
-            {HINTS[state]}
-          </p>
-          {error && (
-            <p role="alert" className="text-meta font-semibold text-error">
-              {error}
-            </p>
-          )}
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={on}
-          aria-labelledby="push-switch-label"
-          aria-describedby="push-switch-hint"
-          disabled={!usable || busy}
-          onClick={toggle}
-          className="flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center disabled:cursor-not-allowed disabled:opacity-50"
+        )}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-labelledby="push-switch-label"
+        aria-describedby="push-switch-hint"
+        disabled={!usable || busy}
+        onClick={toggle}
+        className="-my-0.5 flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span
+          className={`relative inline-block h-3.5 w-6 rounded-full transition-colors ${
+            on ? "bg-gold" : "bg-ink-2"
+          }`}
         >
           <span
-            className={`relative inline-block h-3.5 w-6 rounded-full transition-colors ${
-              on ? "bg-gold" : "bg-line"
+            className={`absolute top-0.5 left-0.5 size-2.5 rounded-full bg-surface shadow transition-transform ${
+              on ? "translate-x-2.5" : ""
             }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 size-2.5 rounded-full bg-surface shadow transition-transform ${
-                on ? "translate-x-2.5" : ""
-              }`}
-            />
-          </span>
-        </button>
-      </div>
-    </section>
+          />
+        </span>
+      </button>
+    </div>
   );
 }

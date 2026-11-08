@@ -307,14 +307,14 @@ describe("Accounts", () => {
       const laptop = await signIn(ivan, PASSWORD);
       const phone = await signIn(ivan, PASSWORD);
 
-      const { headers } = await auth.api.changePassword({
+      await auth.api.changePassword({
         headers: laptop,
         body: { currentPassword: PASSWORD, newPassword: NEW_PASSWORD },
-        returnHeaders: true,
       });
 
       expect(await auth.api.getSession({ headers: phone })).toBeNull();
-      expect(await auth.api.getSession({ headers: sessionFrom(headers) })).not.toBeNull();
+      // The same session goes on, so notifications turned on here stay on.
+      expect(await auth.api.getSession({ headers: laptop })).not.toBeNull();
     });
 
     it("refuses a new password that breaks the password rules", async () => {

@@ -7,13 +7,13 @@ export default function SubmitButton(props: {
   pendingText: string;
   defaultText: string;
   disabled?: boolean;
-  /** Space around the button; the default suits the forms not yet redesigned. */
+  /** Space around the button. */
   className?: string;
 }) {
   const { pending } = useFormStatus();
 
   return (
-    <div className={props.className ?? "p-2"}>
+    <div className={props.className}>
       <button type="submit" disabled={pending || props.disabled} className="btn-gold w-full">
         {pending ? props.pendingText : props.defaultText}
       </button>
