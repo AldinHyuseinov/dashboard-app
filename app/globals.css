@@ -24,10 +24,10 @@
   --color-side-active: rgb(255 255 255 / 0.42);
   --color-side-new: #2b2216;
   --color-on-side-new: #f3e3b8;
-  /* "Нова задача" in the sidebar: gold, outlined in dark brown so it shows on the gold sidebar. */
+  /* "Нова задача" in the sidebar: gold, outlined in the brand brown (on-gold) so it shows on the gold sidebar. */
   --color-new-task: #cda349;
-  --color-on-new-task: #2b2216;
-  --color-new-task-line: #2b2216;
+  --color-on-new-task: var(--color-on-gold);
+  --color-new-task-line: var(--color-on-gold);
   /* The berry dot: Unread only, the one red in the UI. */
   --color-berry: #b0182b;
   --color-on-berry: #ffffff;
