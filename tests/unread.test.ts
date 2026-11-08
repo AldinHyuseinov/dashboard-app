@@ -6,7 +6,7 @@ import { InMemoryEmailAdapter } from "@/lib/email-adapter";
 import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { createComments } from "@/lib/comments";
-import { activity } from "@/lib/activity";
+import { activity, type FeedPage } from "@/lib/activity";
 import type { Actor } from "@/lib/actor";
 import { createUser } from "./support/fixtures";
 
@@ -47,10 +47,14 @@ describe("Unread", () => {
     return result.comment;
   }
 
-  /** What a page of the Feed shows `viewer`, as [what happened, is it Unread]. */
-  async function feedAs(viewer: Actor, { page = 1 } = {}) {
-    const { items } = await activity.feed(viewer, { page });
+  /** What a run of Feed items shows, as [what happened, is it Unread]. */
+  function shown({ items }: FeedPage) {
     return items.map((item) => [item.comment?.excerpt ?? item.type, item.unread]);
+  }
+
+  /** What the newest items of the Feed show `viewer`. */
+  async function feedAs(viewer: Actor) {
+    return shown(await activity.feed(viewer, {}));
   }
 
   describe("visiting the Feed", () => {
@@ -152,7 +156,7 @@ describe("Unread", () => {
       ]);
     });
 
-    it("the count covers every page of the Feed, and each page marks its own items", async () => {
+    it("the count covers the whole Feed, and older items carry their own markers", async () => {
       const ivan = await createUser("Ivan");
       const maria = await createUser("Maria");
       const task = await postTask(maria, { now: MONDAY_8AM });
@@ -161,7 +165,8 @@ describe("Unread", () => {
       }
       await activity.markFeedSeen(ivan, { now: MONDAY_9AM });
 
-      expect(await feedAs(ivan, { page: 2 })).toEqual([
+      const newest = await activity.feed(ivan, {});
+      expect(shown(await activity.feed(ivan, { older: newest.older! }))).toEqual([
         ["Коментар 4", true],
         ["Коментар 3", true],
         ["Коментар 2", true],
@@ -169,6 +174,52 @@ describe("Unread", () => {
         ["task-created", false],
       ]);
       expect(await activity.unreadCount(ivan)).toBe(24);
+    });
+
+    it("scrolling to older items after the Feed was marked seen still shows what was new when it opened", async () => {
+      const ivan = await createUser("Ivan");
+      const maria = await createUser("Maria");
+      const task = await postTask(maria, { now: MONDAY_8AM });
+      for (let i = 1; i <= 24; i++) {
+        await post(maria, task.id, `Коментар ${i}`, { now: minutesAfter(MONDAY_9AM, i) });
+      }
+      await activity.markFeedSeen(ivan, { now: MONDAY_9AM });
+
+      const newest = await activity.feed(ivan, {});
+      await activity.markFeedSeen(ivan, { now: MONDAY_NOON });
+      const older = await activity.feed(ivan, { older: newest.older! });
+
+      expect(shown(older)).toEqual([
+        ["Коментар 4", true],
+        ["Коментар 3", true],
+        ["Коментар 2", true],
+        ["Коментар 1", true],
+        ["task-created", false],
+      ]);
+      // Opened afresh, the Feed shows it all as read.
+      expect(await feedAs(ivan)).toContainEqual(["Коментар 24", false]);
+      expect(await activity.unreadCount(ivan)).toBe(0);
+    });
+
+    it("opening a Task while scrolling marks its older items read", async () => {
+      const ivan = await createUser("Ivan");
+      const maria = await createUser("Maria");
+      const task = await postTask(maria, { now: MONDAY_8AM });
+      for (let i = 1; i <= 24; i++) {
+        await post(maria, task.id, `Коментар ${i}`, { now: minutesAfter(MONDAY_9AM, i) });
+      }
+      await activity.markFeedSeen(ivan, { now: MONDAY_9AM });
+
+      const newest = await activity.feed(ivan, {});
+      await activity.markTaskOpened(ivan, { taskId: task.id, now: MONDAY_NOON });
+
+      expect(shown(await activity.feed(ivan, { older: newest.older! }))).toEqual([
+        ["Коментар 4", false],
+        ["Коментар 3", false],
+        ["Коментар 2", false],
+        ["Коментар 1", false],
+        ["task-created", false],
+      ]);
     });
   });
 

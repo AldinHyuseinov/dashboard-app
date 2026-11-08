@@ -84,3 +84,32 @@ export function RefreshIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+    </Icon>
+  );
+}
+
+/** Done: a tinted, ticked circle. */
+export function DoneIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="9" fill="currentColor" fillOpacity={0.14} />
+      <path d="m8 12 3 3 5-6" />
+    </Icon>
+  );
+}
+
+/** Not Done: an empty circle. */
+export function NotDoneIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="9" />
+    </Icon>
+  );
+}

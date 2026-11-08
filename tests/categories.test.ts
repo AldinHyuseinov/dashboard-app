@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getCategoryLabel,
+  getCategoryGroupLabel,
   isCategory,
   listCategories,
   listCategorySections,
@@ -76,5 +77,11 @@ describe("Categories", () => {
       { heading: "Обекти", isGroup: true, categories: VENUE_CATEGORIES },
       { heading: "Още категории", isGroup: false, categories: STANDALONE_CATEGORIES },
     ]);
+  });
+
+  it("names the Category Group a Category belongs to, and none for a standalone Category", () => {
+    expect(getCategoryGroupLabel("wedding-agencies")).toBe("Обекти");
+    expect(getCategoryGroupLabel("warehouse")).toBeUndefined();
+    expect(getCategoryGroupLabel("nonexistent")).toBeUndefined();
   });
 });

@@ -338,4 +338,31 @@ describe("Tasks", () => {
       expect(board).toMatchObject([{ user: { name: "Ivan" }, files: [] }]);
     });
   });
+
+  describe("counting each Category's Tasks that aren't Done", () => {
+    it("counts only Tasks not yet Done, per Category, and leaves out Categories with none", async () => {
+      const ivan = await createUser("Ivan");
+      const maria = await createUser("Maria");
+      await postTask(ivan, { category: "bars" });
+      const doneBar = await postTask(maria, { category: "bars" });
+      await postTask(maria, { category: "bars" });
+      await postTask(ivan, { category: "warehouse" });
+      const doneHotel = await postTask(ivan, { category: "hotels" });
+      await tasks.setDone(maria, { taskId: doneBar.id, isDone: true, now: MONDAY_10AM });
+      await tasks.setDone(maria, { taskId: doneHotel.id, isDone: true, now: MONDAY_10AM });
+
+      expect(await tasks.notDoneCounts(ivan)).toEqual({ bars: 2, warehouse: 1 });
+    });
+
+    it("counts a Task again once it is marked not Done, and forgets a deleted one", async () => {
+      const ivan = await createUser("Ivan");
+      const reopened = await postTask(ivan, { category: "events" });
+      const deleted = await postTask(ivan, { category: "events" });
+      await tasks.setDone(ivan, { taskId: reopened.id, isDone: true, now: MONDAY_10AM });
+      await tasks.setDone(ivan, { taskId: reopened.id, isDone: false, now: MONDAY_10AM });
+      await tasks.delete(ivan, { taskId: deleted.id, now: MONDAY_10AM });
+
+      expect(await tasks.notDoneCounts(ivan)).toEqual({ events: 1 });
+    });
+  });
 });

@@ -233,7 +233,22 @@ export function createTasks({ notifications }: TaskDeps) {
     return { tasks: taskPage, currentPage, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
   }
 
-  return { create, edit, delete: remove, setDone, get, list };
+  /**
+   * How many Tasks in each Category aren't Done yet, by Category slug. A
+   * Category with none is left out. Every signed-in user sees every Task,
+   * so the Actor doesn't narrow the counts.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- modules always take the Actor
+  async function notDoneCounts(actor: Actor): Promise<Record<string, number>> {
+    const groups = await prisma.task.groupBy({
+      by: ["category"],
+      where: { isDone: false },
+      _count: { _all: true },
+    });
+    return Object.fromEntries(groups.map((group) => [group.category, group._count._all]));
+  }
+
+  return { create, edit, delete: remove, setDone, get, list, notDoneCounts };
 }
 
 export const tasks = createTasks({ notifications: defaultNotifications });

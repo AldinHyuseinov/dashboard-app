@@ -30,14 +30,50 @@ export type FeedItem = {
    * title, and `deleted` is set: the item can no longer be opened.
    */
   task: { id: string; title: string; category: string; categoryLabel: string; deleted: boolean };
-  /** For Comment and Reply Activities: the start of the Comment's current text. */
-  comment: { id: string; excerpt: string } | null;
+  /**
+   * For Comment and Reply Activities: the start of the Comment's current
+   * text and, for a Reply, the author of the Comment it answers.
+   */
+  comment: { id: string; excerpt: string; repliesTo: { id: string; name: string } | null } | null;
   /** Whether the user viewing the Feed hasn't seen it yet (see `unreadWhere`). */
   unread: boolean;
 };
 
-/** One page of the Activity Feed. */
-export type FeedPage = { items: FeedItem[]; currentPage: number; totalPages: number };
+/**
+ * A run of the Activity Feed's items, newest first. `older` is where the
+ * items older than these continue (pass it back to `feed`), or `null` when
+ * there are none.
+ */
+export type FeedPage = { items: FeedItem[]; older: string | null };
+
+/**
+ * Where a run of older items starts: just after the item last shown, and
+ * the viewer's last Feed visit as it was when the Feed was opened, so older
+ * items keep the Unread markers they had then.
+ */
+type FeedCursor = { occurredAt: Date; id: string; lastFeedVisitAt: Date | null };
+
+function encodeCursor({ occurredAt, id, lastFeedVisitAt }: FeedCursor): string {
+  const json = JSON.stringify([occurredAt.getTime(), id, lastFeedVisitAt?.getTime() ?? null]);
+  return Buffer.from(json).toString("base64url");
+}
+
+/** The cursor `older` names, or `null` if it isn't one. It comes back from the person's device. */
+function decodeCursor(older: string): FeedCursor | null {
+  try {
+    const [occurredAt, id, lastFeedVisitAt] = JSON.parse(Buffer.from(older, "base64url").toString());
+    const isTime = (value: unknown) => typeof value === "number" && Number.isFinite(value);
+    if (!isTime(occurredAt) || typeof id !== "string") return null;
+    if (lastFeedVisitAt !== null && !isTime(lastFeedVisitAt)) return null;
+    return {
+      occurredAt: new Date(occurredAt),
+      id,
+      lastFeedVisitAt: lastFeedVisitAt === null ? null : new Date(lastFeedVisitAt),
+    };
+  } catch {
+    return null;
+  }
+}
 
 /** How many characters of a Comment's text a Feed item shows. */
 const EXCERPT_LENGTH = 100;
@@ -123,26 +159,36 @@ function excerpt(text: string): string {
  * The Unread rule, as a condition on the Activity `a`: it is Unread for the
  * Actor when someone else caused it, and it's newer than both their
  * last Feed visit (if any) and their last opening of its Task (if any).
+ * `asOf` replaces the stored last Feed visit with the one given.
  */
-function unreadWhere(actor: Actor) {
+function unreadWhere(actor: Actor, asOf?: { lastFeedVisitAt: Date | null }) {
+  const afterFeedVisit = asOf
+    ? asOf.lastFeedVisitAt
+      ? Prisma.sql`a.[occurredAt] > ${asOf.lastFeedVisitAt}`
+      : Prisma.sql`1 = 1`
+    : Prisma.sql`NOT EXISTS (
+        SELECT 1 FROM [dbo].[user] u
+        WHERE u.[id] = ${actor.id} AND u.[lastFeedVisitAt] >= a.[occurredAt]
+      )`;
   return Prisma.sql`
     a.[actorId] <> ${actor.id}
-    AND NOT EXISTS (
-      SELECT 1 FROM [dbo].[user] u
-      WHERE u.[id] = ${actor.id} AND u.[lastFeedVisitAt] >= a.[occurredAt]
-    )
+    AND ${afterFeedVisit}
     AND NOT EXISTS (
       SELECT 1 FROM [dbo].[TaskOpening] o
       WHERE o.[userId] = ${actor.id} AND o.[taskId] = a.[taskId] AND o.[openedAt] >= a.[occurredAt]
     )`;
 }
 
-/** Which of `activityIds` are Unread for the Actor. */
-async function unreadAmong(actor: Actor, activityIds: string[]): Promise<Set<string>> {
+/** Which of `activityIds` are Unread for the Actor, as of their last Feed visit `lastFeedVisitAt`. */
+async function unreadAmong(
+  actor: Actor,
+  activityIds: string[],
+  lastFeedVisitAt: Date | null,
+): Promise<Set<string>> {
   if (activityIds.length === 0) return new Set();
   const rows = await prisma.$queryRaw<{ id: string }[]>`
     SELECT a.[id] FROM [dbo].[Activity] a
-    WHERE a.[id] IN (${Prisma.join(activityIds)}) AND ${unreadWhere(actor)}`;
+    WHERE a.[id] IN (${Prisma.join(activityIds)}) AND ${unreadWhere(actor, { lastFeedVisitAt })}`;
   return new Set(rows.map((row) => row.id));
 }
 
@@ -159,25 +205,47 @@ function shownUntil(shownAt: Date | undefined, now: Date): Date {
 /** Builds the Activity module. */
 export function createActivity() {
   /**
-   * One page of the Activity Feed, newest first. It is the same for every
-   * user. A page number below 1 is treated as the first page.
-   * A page number past the end is treated as the last page.
+   * The Activity Feed, newest first, the same for every user: its newest
+   * items, or with `older`, the items older than a run already shown. An
+   * `older` that isn't one `feed` gave starts again from the newest.
+   * Older items show the Unread markers they had when the Feed was opened.
    */
-  async function feed(actor: Actor, { page }: { page: number }): Promise<FeedPage> {
-    const { rows, currentPage, totalPages } = await prisma.$transaction(async (tx) => {
-      const totalPages = Math.ceil((await tx.activity.count()) / FEED_ITEMS_PER_PAGE);
-      const currentPage = Math.max(1, Math.min(Math.floor(page) || 1, totalPages));
-      const rows = await tx.activity.findMany({
-        orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
-        skip: (currentPage - 1) * FEED_ITEMS_PER_PAGE,
-        take: FEED_ITEMS_PER_PAGE,
-        include: {
-          actor: { select: { id: true, name: true } },
-          comment: { select: { id: true, text: true } },
+  async function feed(actor: Actor, { older }: { older?: string }): Promise<FeedPage> {
+    const cursor = older === undefined ? null : decodeCursor(older);
+    const lastFeedVisitAt = cursor
+      ? cursor.lastFeedVisitAt
+      : ((await prisma.user.findUnique({ where: { id: actor.id }, select: { lastFeedVisitAt: true } }))
+          ?.lastFeedVisitAt ?? null);
+
+    // One more than shown, to tell whether anything older remains.
+    const found = await prisma.activity.findMany({
+      where: cursor
+        ? {
+            OR: [
+              { occurredAt: { lt: cursor.occurredAt } },
+              { occurredAt: cursor.occurredAt, id: { lt: cursor.id } },
+            ],
+          }
+        : {},
+      orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
+      take: FEED_ITEMS_PER_PAGE + 1,
+      include: {
+        actor: { select: { id: true, name: true } },
+        comment: {
+          select: {
+            id: true,
+            text: true,
+            answers: { select: { user: { select: { id: true, name: true } } } },
+          },
         },
-      });
-      return { rows, currentPage, totalPages };
+      },
     });
+    const rows = found.slice(0, FEED_ITEMS_PER_PAGE);
+    const last = rows.at(-1);
+    const nextCursor =
+      found.length > FEED_ITEMS_PER_PAGE && last
+        ? encodeCursor({ occurredAt: last.occurredAt, id: last.id, lastFeedVisitAt })
+        : null;
 
     // Not a relation (Activities outlive their Task), so the Tasks that still
     // exist are looked up separately for their current titles.
@@ -186,7 +254,7 @@ export function createActivity() {
       select: { id: true, title: true },
     });
     const currentTitles = new Map(liveTasks.map((task) => [task.id, task.title]));
-    const unread = await unreadAmong(actor, rows.map((row) => row.id));
+    const unread = await unreadAmong(actor, rows.map((row) => row.id), lastFeedVisitAt);
 
     const items = rows.map((row): FeedItem => ({
       id: row.id,
@@ -200,10 +268,16 @@ export function createActivity() {
         categoryLabel: categoryLabelOrSlug(row.taskCategory),
         deleted: !currentTitles.has(row.taskId),
       },
-      comment: row.comment ? { id: row.comment.id, excerpt: excerpt(row.comment.text) } : null,
+      comment: row.comment
+        ? {
+            id: row.comment.id,
+            excerpt: excerpt(row.comment.text),
+            repliesTo: row.comment.answers?.user ?? null,
+          }
+        : null,
       unread: unread.has(row.id),
     }));
-    return { items, currentPage, totalPages };
+    return { items, older: nextCursor };
   }
 
   /**

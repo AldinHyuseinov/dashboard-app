@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackIcon, ChevronRightIcon } from "@/components/shell/icons";
 
 /** Previous and next page links with "page X of Y", shown only when there is more than one page. */
 export default function Pagination({
@@ -12,26 +13,43 @@ export default function Pagination({
 }) {
   if (totalPages <= 1) return null;
 
-  const linkClass = (disabled: boolean) =>
-    `px-4 py-3 border rounded-md text-xs font-bold transition-all ${
-      disabled
-        ? "pointer-events-none opacity-40 border-gray-200 text-gray-400"
-        : "border-gray-300 text-gray-700 bg-white hover:bg-gray-100 hover:border-primary-gold"
-    }`;
-
   return (
-    <div className="flex justify-center items-center gap-2 mb-2 pt-2 border-t border-gray-100">
-      <Link href={pageHref(currentPage - 1)} className={linkClass(currentPage <= 1)}>
-        ◄
-      </Link>
-
-      <span className="text-xs font-bold text-gray-500 tracking-wider">
+    <nav aria-label="Страници" className="flex items-center justify-center gap-2">
+      <PageLink href={pageHref(currentPage - 1)} disabled={currentPage <= 1} label="Предишна страница">
+        <BackIcon size={20} />
+      </PageLink>
+      <span className="text-meta font-semibold text-ink-2">
         Страница {currentPage} от {totalPages}
       </span>
+      <PageLink href={pageHref(currentPage + 1)} disabled={currentPage >= totalPages} label="Следваща страница">
+        <ChevronRightIcon size={20} />
+      </PageLink>
+    </nav>
+  );
+}
 
-      <Link href={pageHref(currentPage + 1)} className={linkClass(currentPage >= totalPages)}>
-        ►
-      </Link>
-    </div>
+function PageLink({
+  href,
+  disabled,
+  label,
+  children,
+}: {
+  href: string;
+  disabled: boolean;
+  label: string;
+  children: React.ReactNode;
+}) {
+  const className = "btn-ghost size-touch px-0";
+  if (disabled) {
+    return (
+      <span aria-disabled="true" aria-label={label} className={`${className} opacity-40`}>
+        {children}
+      </span>
+    );
+  }
+  return (
+    <Link href={href} aria-label={label} className={className}>
+      {children}
+    </Link>
   );
 }

@@ -92,6 +92,17 @@ export function getCategoryLabel(slug: string): string | undefined {
   return LABELS.get(slug);
 }
 
+const GROUP_LABELS = new Map(
+  CATEGORY_TREE.flatMap((item) =>
+    item.kind === "group" ? item.categories.map((c) => [c.slug, item.label] as const) : [],
+  ),
+);
+
+/** The label of the Category Group the Category `slug` belongs to, or `undefined` if none. */
+export function getCategoryGroupLabel(slug: string): string | undefined {
+  return GROUP_LABELS.get(slug);
+}
+
 /**
  * The label to show for a Task's stored Category. Falls back to the stored
  * value when it isn't a Category, so a stray legacy value stays readable.

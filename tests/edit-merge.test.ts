@@ -58,7 +58,7 @@ describe("Merging repeated edits", () => {
 
   /** The Feed as [type, Actor, time, title] rows, newest first. */
   async function feedRows(viewer: Actor) {
-    const feed = await activity.feed(viewer, { page: 1 });
+    const feed = await activity.feed(viewer, {});
     return feed.items.map((item) => [item.type, item.actor.name, item.occurredAt, item.task.title]);
   }
 
@@ -137,7 +137,7 @@ describe("Merging repeated edits", () => {
     await edit(ivan, ivansTask.id, "Винена листа 2027", mondayAt10(0));
     await edit(maria, mariasTask.id, "Инвентаризация на склада", mondayAt10(2));
 
-    const feed = await activity.feed(ivan, { page: 1 });
+    const feed = await activity.feed(ivan, {});
     expect(feed.items.slice(0, 2).map((item) => [item.type, item.actor.name, item.occurredAt, item.task.id])).toEqual([
       ["task-edited", "Maria", mondayAt10(2), mariasTask.id],
       ["task-edited", "Ivan", mondayAt10(0), ivansTask.id],

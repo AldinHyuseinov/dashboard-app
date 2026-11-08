@@ -6,6 +6,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { PdfPreviewLarge } from "@/components/task/FilePreview";
 import TaskMeta from "@/components/task/TaskMeta";
+import DeleteTaskButton from "@/components/task/DeleteTaskButton";
 import TaskCommentsSection from "@/components/comments/TaskCommentsSection";
 import { MarkTaskOpened } from "@/components/shell/UnreadCount";
 
@@ -139,6 +140,7 @@ export default async function TaskDetailPage({
               Редактирай
             </Link>
           )}
+          {isOwner && <DeleteTaskButton taskId={task.id} />}
         </div>
       </div>
 

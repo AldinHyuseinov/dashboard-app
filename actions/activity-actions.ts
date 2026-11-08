@@ -1,6 +1,6 @@
 "use server";
 
-import { activity } from "@/lib/activity";
+import { activity, type FeedPage } from "@/lib/activity";
 import { requireActor } from "@/lib/session";
 
 /** The Feed was shown at `shownAt`: everything in it is no longer Unread. */
@@ -22,4 +22,10 @@ export async function markTaskOpenedAction(taskId: string, shownAt: Date) {
 /** The client's time, if it sent a valid one. */
 function asDate(value: unknown): Date | undefined {
   return value instanceof Date && !Number.isNaN(value.getTime()) ? value : undefined;
+}
+
+/** The Feed items older than those already shown, where `older` says they continue. */
+export async function olderFeedItemsAction(older: string): Promise<FeedPage> {
+  const actor = await requireActor();
+  return activity.feed(actor, { older: String(older) });
 }

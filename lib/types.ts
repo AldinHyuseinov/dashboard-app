@@ -121,12 +121,6 @@ export type TaskWithFiles = Task & {
   user: { name: string };
 };
 
-export type TaskCardProps = {
-  task: TaskWithFiles;
-  currentUserId: string;
-  onView: () => void;
-};
-
 export type TaskFormProps = {
   onClose: () => void;
   category: string;
