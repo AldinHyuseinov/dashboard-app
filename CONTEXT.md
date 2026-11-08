@@ -61,3 +61,9 @@ A browser where a user turned notifications on while signed in. Their Notificati
 **Notification**:
 A message telling a user about an Activity, or a Reaction to their Comment, that someone else caused. Each person receives it by push on any device where they've turned notifications on, or by email if they have no such device.
 _Avoid_: alert
+
+### People
+
+**Profile picture**:
+A photo a user chooses to show beside their name, trimmed to a square. Without one, their initials stand in. Only the user can set or remove it.
+_Avoid_: avatar (the circle that shows either the picture or the initials)
