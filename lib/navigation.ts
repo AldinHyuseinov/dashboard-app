@@ -27,6 +27,14 @@ export function taskHref(task: { id: string; category: string }): string {
   return `/category/${task.category}/${task.id}`;
 }
 
+/**
+ * Opens a Task known only by its id, as a push notification does: the
+ * Task's screen, or the Feed once the Task is deleted.
+ */
+export function openTaskHref(taskId: string): string {
+  return `/tasks/${taskId}`;
+}
+
 /** The top-level destinations, in display order. */
 export const NAV_ITEMS: readonly NavItem[] = [
   { id: "feed", href: "/", label: "Активност" },

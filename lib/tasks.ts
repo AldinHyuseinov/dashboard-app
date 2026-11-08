@@ -61,7 +61,7 @@ export function createTasks({ notifications }: TaskDeps) {
   async function findOwnTask(actor: Actor, taskId: string, notOwner: string) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
-      select: { id: true, category: true, userId: true },
+      select: { id: true, title: true, category: true, userId: true },
     });
     if (!task) return { ok: false as const, errors: { form: TASK_NOT_FOUND } };
     if (task.userId !== actor.id) return { ok: false as const, errors: { form: notOwner } };
@@ -97,14 +97,14 @@ export function createTasks({ notifications }: TaskDeps) {
         });
         await changeTaskFiles(tx, actor, { taskId: created.id, addedFileIds: input.fileIds });
         await recordActivity(tx, actor, { type: "task-created", task: created, now: input.now });
-        return { id: created.id, category: created.category };
+        return created;
       });
     } catch (error) {
       return saveFailure(error, "Task create failed:");
     }
 
-    await notifications.notify(actor, { type: "task-created", category: task.category });
-    return { ok: true, task };
+    await notifications.notify(actor, { type: "task-created", task: { ...task, userId: actor.id } });
+    return { ok: true, task: { id: task.id, category: task.category } };
   }
 
   /**
@@ -147,15 +147,17 @@ export function createTasks({ notifications }: TaskDeps) {
           select: { id: true, title: true, category: true },
         });
         const { merged } = await recordTaskEdited(tx, actor, { task: edited, now: input.now });
-        return { task: { id: edited.id, category: edited.category }, merged };
+        return { task: edited, merged };
       });
     } catch (error) {
       return saveFailure(error, "Task edit failed:");
     }
 
     const { task, merged } = saved;
-    if (!merged) await notifications.notify(actor, { type: "task-edited", category: task.category });
-    return { ok: true, task };
+    if (!merged) {
+      await notifications.notify(actor, { type: "task-edited", task: { ...task, userId: actor.id } });
+    }
+    return { ok: true, task: { id: task.id, category: task.category } };
   }
 
   /**
@@ -178,7 +180,7 @@ export function createTasks({ notifications }: TaskDeps) {
     });
 
     const { id, category } = owned.task;
-    await notifications.notify(actor, { type: "task-deleted", category });
+    await notifications.notify(actor, { type: "task-deleted", task: owned.task });
     return { ok: true, task: { id, category } };
   }
 

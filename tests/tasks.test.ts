@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryEmailAdapter } from "@/lib/email-adapter";
+import { InMemoryPushAdapter } from "@/lib/push-adapter";
 import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { createComments } from "@/lib/comments";
@@ -15,7 +16,7 @@ describe("Tasks", () => {
 
   beforeEach(() => {
     emails = new InMemoryEmailAdapter();
-    tasks = createTasks({ notifications: createNotifications({ emailAdapter: emails }) });
+    tasks = createTasks({ notifications: createNotifications({ emailAdapter: emails, pushAdapter: new InMemoryPushAdapter() }) });
   });
 
   /** Posts a Task as `owner`, then forgets the email it sent. */
@@ -197,7 +198,7 @@ describe("Tasks", () => {
       const ivan = await createUser("Ivan");
       const maria = await createUser("Maria");
       const { id } = await postTask(ivan);
-      const notifications = createNotifications({ emailAdapter: emails });
+      const notifications = createNotifications({ emailAdapter: emails, pushAdapter: new InMemoryPushAdapter() });
       const comments = createComments({ notifications });
       const comment = await comments.post(maria, { taskId: id, text: "Кога?", now: MONDAY_10AM });
       if (!comment.ok) throw new Error(comment.error);

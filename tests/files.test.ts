@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import sharp from "sharp";
 import { InMemoryEmailAdapter } from "@/lib/email-adapter";
+import { InMemoryPushAdapter } from "@/lib/push-adapter";
 import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { createFiles } from "@/lib/files";
@@ -23,7 +24,7 @@ describe("Files", () => {
 
   beforeEach(() => {
     tasks = createTasks({
-      notifications: createNotifications({ emailAdapter: new InMemoryEmailAdapter() }),
+      notifications: createNotifications({ emailAdapter: new InMemoryEmailAdapter(), pushAdapter: new InMemoryPushAdapter() }),
     });
     files = createFiles({
       // Stands in for FFmpeg: every video "compresses" to the same bytes.

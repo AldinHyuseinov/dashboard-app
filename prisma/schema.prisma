@@ -28,6 +28,7 @@ model User {
   uploadedFiles TaskFile[]
   activities    Activity[]
   taskOpenings  TaskOpening[]
+  pushDevices   PushDevice[]
 
   /// When the user last opened the Activity Feed: what others did up to then
   /// is no longer Unread for them. Null until they first open it.
@@ -47,6 +48,7 @@ model Session {
   userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pushDevices PushDevice[]
 
   @@unique([token])
   @@index([userId])
@@ -170,6 +172,32 @@ model TaskOpening {
   openedAt DateTime
 
   @@id([userId, taskId])
+}
+
+/// A browser where a user turned notifications on. Their Notifications go to
+/// each of their push devices by push, and by email only when they have none.
+/// A device belongs to the session it was turned on in: signing out of that
+/// session removes it.
+model PushDevice {
+  id        String  @id @default(cuid())
+  /// NoAction: the user's sessions already cascade here, and SQL Server allows
+  /// only one cascade path.
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sessionId String
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  /// The push service URL that reaches this browser. Push services keep it
+  /// well under 800 characters, which keeps it indexable.
+  endpoint String @unique @db.NVarChar(800)
+  /// The browser's keys that each push is encrypted with.
+  p256dh   String
+  auth     String
+
+  createdAt DateTime
+
+  @@index([userId])
+  @@index([sessionId])
 }
 
 model Reaction {

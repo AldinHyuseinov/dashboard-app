@@ -55,6 +55,9 @@ An Activity someone else caused that the user hasn't seen yet: it happened after
 **Actor**:
 The user whose action caused a Notification. An Actor is never notified about their own action.
 
+**Push device**:
+A browser where a user turned notifications on while signed in. Their Notifications go there by push instead of by email. Signing out of that browser, or the push service refusing it, removes it.
+
 **Notification**:
 A message telling a user about an Activity, or a Reaction to their Comment, that someone else caused. Each person receives it by push on any device where they've turned notifications on, or by email if they have no such device.
 _Avoid_: alert

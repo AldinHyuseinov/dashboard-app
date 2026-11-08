@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { InMemoryEmailAdapter } from "@/lib/email-adapter";
+import { InMemoryPushAdapter } from "@/lib/push-adapter";
 import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { createComments } from "@/lib/comments";
@@ -22,7 +23,7 @@ describe("Unread", () => {
   let comments: ReturnType<typeof createComments>;
 
   beforeEach(() => {
-    const notifications = createNotifications({ emailAdapter: new InMemoryEmailAdapter() });
+    const notifications = createNotifications({ emailAdapter: new InMemoryEmailAdapter(), pushAdapter: new InMemoryPushAdapter() });
     tasks = createTasks({ notifications });
     comments = createComments({ notifications });
   });

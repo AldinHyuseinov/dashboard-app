@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryEmailAdapter } from "@/lib/email-adapter";
+import { InMemoryPushAdapter } from "@/lib/push-adapter";
 import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { activity } from "@/lib/activity";
@@ -23,7 +24,7 @@ describe("Merging repeated edits", () => {
 
   beforeEach(() => {
     emails = new InMemoryEmailAdapter();
-    tasks = createTasks({ notifications: createNotifications({ emailAdapter: emails }) });
+    tasks = createTasks({ notifications: createNotifications({ emailAdapter: emails, pushAdapter: new InMemoryPushAdapter() }) });
   });
 
   /** Posts a Task as `owner`, then forgets the email it sent. */

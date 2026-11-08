@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryEmailAdapter } from "@/lib/email-adapter";
+import { InMemoryPushAdapter } from "@/lib/push-adapter";
 import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { createComments } from "@/lib/comments";
@@ -17,7 +18,7 @@ describe("Comments", () => {
 
   beforeEach(() => {
     emails = new InMemoryEmailAdapter();
-    const notifications = createNotifications({ emailAdapter: emails });
+    const notifications = createNotifications({ emailAdapter: emails, pushAdapter: new InMemoryPushAdapter() });
     tasks = createTasks({ notifications });
     comments = createComments({ notifications });
   });

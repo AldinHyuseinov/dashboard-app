@@ -83,8 +83,8 @@ export function createComments({ notifications }: CommentDeps) {
     await notifications.notify(
       actor,
       answered
-        ? { type: "reply-posted", task, answeredAuthorId: answered.userId }
-        : { type: "comment-posted", task },
+        ? { type: "reply-posted", task, commentText: text, answeredAuthorId: answered.userId }
+        : { type: "comment-posted", task, commentText: text },
     );
     return { ok: true, comment: { id: comment.id, taskId: task.id, category: task.category } };
   }
@@ -99,7 +99,8 @@ export function createComments({ notifications }: CommentDeps) {
         userId: true,
         parentId: true,
         isPinned: true,
-        task: { select: { title: true, category: true, userId: true } },
+        text: true,
+        task: { select: { id: true, title: true, category: true, userId: true } },
       },
     });
     if (!comment) return null;
@@ -170,6 +171,8 @@ export function createComments({ notifications }: CommentDeps) {
       await notifications.notify(actor, {
         type: "reaction-added",
         task: comment.task,
+        commentText: comment.text,
+        emoji: input.emoji,
         commentAuthorId: comment.userId,
       });
     }

@@ -34,3 +34,17 @@ export async function uploadFile(
 export async function bytesOf(read: { body: ReadableStream<Uint8Array> }) {
   return Buffer.from(await new Response(read.body).arrayBuffer());
 }
+
+/** A session `user` is signed in with, as if on a new device. */
+export async function createSession(user: { id: string }, now = new Date("2026-11-02T08:00:00Z")) {
+  return prisma.session.create({
+    data: {
+      id: randomUUID(),
+      token: randomUUID(),
+      userId: user.id,
+      expiresAt: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+}

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createAuth, type Auth } from "@/lib/auth";
 import { InMemoryEmailAdapter } from "@/lib/email-adapter";
+import { InMemoryPushAdapter } from "@/lib/push-adapter";
 import { createNotifications, type NotifiedAction } from "@/lib/notifications";
 import type { CodePurpose } from "@/lib/code-email";
 import { createUser } from "./support/fixtures";
@@ -64,16 +65,23 @@ describe("Emails hold no links", () => {
   describe("Notification emails", () => {
     /** One action of every type a Notification is sent for. */
     function actions(ownerId: string): Record<NotifiedAction["type"], NotifiedAction> {
-      const owned = { title: "Нова винена листа", category: "golf-clubs", userId: ownerId };
+      const owned = { id: "task-1", title: "Нова винена листа", category: "golf-clubs", userId: ownerId };
+      const commentText = "Готово е";
       return {
-        "task-created": { type: "task-created", category: "golf-clubs" },
-        "task-edited": { type: "task-edited", category: "golf-clubs" },
-        "task-deleted": { type: "task-deleted", category: "golf-clubs" },
+        "task-created": { type: "task-created", task: owned },
+        "task-edited": { type: "task-edited", task: owned },
+        "task-deleted": { type: "task-deleted", task: owned },
         "task-done": { type: "task-done", task: owned },
         "task-not-done": { type: "task-not-done", task: owned },
-        "comment-posted": { type: "comment-posted", task: owned },
-        "reply-posted": { type: "reply-posted", task: owned, answeredAuthorId: ownerId },
-        "reaction-added": { type: "reaction-added", task: owned, commentAuthorId: ownerId },
+        "comment-posted": { type: "comment-posted", task: owned, commentText },
+        "reply-posted": { type: "reply-posted", task: owned, commentText, answeredAuthorId: ownerId },
+        "reaction-added": {
+          type: "reaction-added",
+          task: owned,
+          commentText,
+          emoji: "👍",
+          commentAuthorId: ownerId,
+        },
       };
     }
 
@@ -84,7 +92,7 @@ describe("Emails hold no links", () => {
       async (type) => {
         const ivan = await createUser("Ivan");
         const maria = await createUser("Maria");
-        const notifications = createNotifications({ emailAdapter: emails });
+        const notifications = createNotifications({ emailAdapter: emails, pushAdapter: new InMemoryPushAdapter() });
 
         await notifications.notify(maria, actions(ivan.id)[type]);
 

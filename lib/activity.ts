@@ -150,8 +150,8 @@ export async function recordTaskDeleted(
   await recordActivity(tx, actor, { type: "task-deleted", task, now });
 }
 
-/** The start of a Comment's text, as a Feed item shows it. */
-function excerpt(text: string): string {
+/** The start of a Comment's text, as a Feed item and a push notification show it. */
+export function excerpt(text: string): string {
   return text.length > EXCERPT_LENGTH ? `${text.slice(0, EXCERPT_LENGTH).trimEnd()}…` : text;
 }
 
