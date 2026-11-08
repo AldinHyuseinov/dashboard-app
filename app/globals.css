@@ -20,15 +20,14 @@
   --color-bar: #cda349;
   --color-bar-ink: #2b2216;
   --color-bar-line: #b8913c;
-  --color-bar-hover: rgb(255 255 255 / 0.42);
-  /* The desktop sidebar: white like the phone's bottom bar, with the logo on a gold band (bar). */
-  --color-side: #ffffff;
-  --color-side-ink: #2b2216;
-  --color-side-line: #e4ded1;
-  --color-side-eyebrow: #6b5d45;
-  --color-side-active: #f4ebd3;
-  --color-side-new: #cda349;
-  --color-on-side-new: #2b2216;
+  --color-side-eyebrow: #4a3b22;
+  --color-side-active: rgb(255 255 255 / 0.42);
+  --color-side-new: #2b2216;
+  --color-on-side-new: #f3e3b8;
+  /* "Нова задача" in the sidebar: gold, outlined in dark brown so it shows on the gold sidebar. */
+  --color-new-task: #cda349;
+  --color-on-new-task: #2b2216;
+  --color-new-task-line: #2b2216;
   /* The berry dot: Unread only, the one red in the UI. */
   --color-berry: #b0182b;
   --color-on-berry: #ffffff;
@@ -99,14 +98,13 @@
     --color-bar: #1e1912;
     --color-bar-ink: #f2ecdf;
     --color-bar-line: #352c20;
-    --color-bar-hover: #2c2419;
-    --color-side: #1e1912;
-    --color-side-ink: #f2ecdf;
-    --color-side-line: transparent;
     --color-side-eyebrow: #bcaf97;
     --color-side-active: #2c2419;
     --color-side-new: #d4ae55;
     --color-on-side-new: #1b160f;
+    --color-new-task: #d4ae55;
+    --color-on-new-task: #1b160f;
+    --color-new-task-line: transparent;
     --color-berry: #c42b40;
     --color-vine: #9bbe68;
     --color-vine-tint: #25301a;

@@ -1,5 +1,5 @@
 import { activity } from "@/lib/activity";
-import { deviceSidebarHidden } from "@/lib/device-sidebar";
+import { deviceSidebar } from "@/lib/device-sidebar";
 import { getActor } from "@/lib/session";
 import BottomBar from "./BottomBar";
 import ScreenBar from "./ScreenBar";
@@ -25,9 +25,11 @@ export default async function AppShell({ children }: { children: React.ReactNode
     );
   }
 
+  const sidebar = await deviceSidebar();
+
   return (
     <UnreadCountProvider initialCount={await activity.unreadCount(actor)}>
-      <ShellFrame initialHidden={await deviceSidebarHidden()}>
+      <ShellFrame initialHidden={sidebar.hidden} initialWidth={sidebar.width}>
         <Sidebar userName={actor.name} />
 
         <div className="flex min-w-0 flex-1 flex-col">

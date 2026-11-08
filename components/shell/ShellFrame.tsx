@@ -1,31 +1,57 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
-import { sidebarCookie } from "@/lib/sidebar";
+import { createContext, useContext, useRef, useState } from "react";
+import { clampSidebarWidth, sidebarCookie, sidebarWidthCookie } from "@/lib/sidebar";
 import { SidebarIcon } from "./icons";
 import { useUnreadCount } from "./UnreadCount";
 
-const SidebarHiddenContext = createContext(false);
+type SidebarState = {
+  hidden: boolean;
+  /** Width in px. */
+  width: number;
+  /** True while the width is being dragged: it must follow the pointer without easing. */
+  resizing: boolean;
+  setResizing: (resizing: boolean) => void;
+  /** Sets the width, kept within the limits. */
+  setWidth: (width: number) => void;
+  /** Keeps the current width for this browser. */
+  saveWidth: () => void;
+};
 
-/** Whether the desktop sidebar is hidden. */
-export function useSidebarHidden(): boolean {
-  return useContext(SidebarHiddenContext);
+const SidebarContext = createContext<SidebarState>({
+  hidden: false,
+  width: 0,
+  resizing: false,
+  setResizing: () => {},
+  setWidth: () => {},
+  saveWidth: () => {},
+});
+
+/** Whether the desktop sidebar is hidden, how wide it is, and how to resize it. */
+export function useSidebar(): SidebarState {
+  return useContext(SidebarContext);
 }
 
 /**
  * The frame the sidebar and the screen sit in. It holds whether the desktop
- * sidebar is hidden (first from the browser's cookie, read on the server) and
- * puts it on `data-sidebar`, which the sidebar and the screen's bar style
- * from. The toggle switches straight away and writes the cookie.
+ * sidebar is hidden and how wide it is (first from the browser's cookies, read
+ * on the server) and puts the hidden state on `data-sidebar`, which the screen's
+ * bar styles from. The toggle and the resizing switch straight away and write
+ * their cookie.
  */
 export default function ShellFrame({
   initialHidden,
+  initialWidth,
   children,
 }: {
   initialHidden: boolean;
+  initialWidth: number;
   children: React.ReactNode;
 }) {
   const [hidden, setHidden] = useState(initialHidden);
+  const [width, setWidthState] = useState(initialWidth);
+  const [resizing, setResizing] = useState(false);
+  const latestWidth = useRef(initialWidth);
   const unreadCount = useUnreadCount();
 
   function toggle() {
@@ -34,9 +60,22 @@ export default function ShellFrame({
     document.cookie = sidebarCookie(next);
   }
 
+  function setWidth(next: number) {
+    latestWidth.current = clampSidebarWidth(next);
+    setWidthState(latestWidth.current);
+  }
+
+  function saveWidth() {
+    document.cookie = sidebarWidthCookie(latestWidth.current);
+  }
+
   return (
-    <SidebarHiddenContext value={hidden}>
-      <div data-sidebar={hidden ? "hidden" : "shown"} className="group/shell min-h-dvh lg:flex">
+    <SidebarContext value={{ hidden, width, resizing, setResizing, setWidth, saveWidth }}>
+      <div
+        data-sidebar={hidden ? "hidden" : "shown"}
+        className="group/shell min-h-dvh lg:flex"
+        style={{ "--sidebar-width": `${width}px` } as React.CSSProperties}
+      >
         {/* First in the tab order, ahead of the toggle. */}
         <a
           href="#main"
@@ -47,8 +86,8 @@ export default function ShellFrame({
 
         {/*
           Top-left of the screen either way, and it stays put as the page
-          scrolls. Shown, it sits bare on the sidebar's gold band; hidden, it's
-          a round chip, so it reads over whatever scrolls beneath it.
+          scrolls. Shown, it sits bare on the sidebar's gold; hidden, it's a
+          round chip, so it reads over whatever scrolls beneath it.
         */}
         <button
           type="button"
@@ -73,6 +112,6 @@ export default function ShellFrame({
 
         {children}
       </div>
-    </SidebarHiddenContext>
+    </SidebarContext>
   );
 }

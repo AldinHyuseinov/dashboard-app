@@ -7,7 +7,8 @@ import { navItem, screenAt } from "@/lib/navigation";
 import { initials } from "@/lib/utils";
 import { FeedIcon, PlusIcon } from "./icons";
 import Logo from "./Logo";
-import { useSidebarHidden } from "./ShellFrame";
+import { useSidebar } from "./ShellFrame";
+import SidebarResizer from "./SidebarResizer";
 import UnreadBadge from "./UnreadBadge";
 import { useUnreadCount } from "./UnreadCount";
 
@@ -15,7 +16,7 @@ import { useUnreadCount } from "./UnreadCount";
  * The desktop sidebar: the logo, New task, the Feed and every Category
  * (Venues' Categories under their heading, then the rest), and the Profile.
  * Hidden on phones, where the bottom bar takes over. On desktop it can also
- * be hidden with the toggle (see ShellFrame).
+ * be hidden with the toggle (see ShellFrame) and dragged wider or narrower.
  */
 export default function Sidebar({ userName }: { userName: string }) {
   const pathname = usePathname();
@@ -26,36 +27,37 @@ export default function Sidebar({ userName }: { userName: string }) {
   const newTask = navItem("new-task");
   const profile = navItem("profile");
 
-  const hidden = useSidebarHidden();
+  const { hidden, resizing } = useSidebar();
 
   return (
-    // The slot keeps the sidebar's width and narrows to nothing when hidden,
-    // so the screen takes the room; the sidebar slides out within it.
+    // The slot is as wide as the sidebar and narrows to nothing when hidden,
+    // so the screen takes the room; the sidebar slides out within it. While
+    // dragging, the width follows the pointer without easing.
     <div
-      className={`hidden shrink-0 overflow-clip transition-[width] duration-200 ease-out lg:block ${
-        hidden ? "lg:w-0" : "lg:w-32"
-      }`}
+      className={`relative hidden shrink-0 overflow-clip lg:block ${
+        hidden ? "lg:w-0" : "lg:w-(--sidebar-width)"
+      } ${resizing ? "" : "transition-[width] duration-200 ease-out"}`}
     >
       <aside
         id="sidebar"
         // Hidden is out of the tab order and away from screen readers.
         inert={hidden}
-        className={`sticky top-0 flex h-dvh w-32 flex-col overflow-y-auto bg-side text-side-ink shadow-[inset_-1px_0_0_var(--color-side-line)] transition-transform duration-200 ease-out ${
+        className={`on-bar sticky top-0 flex h-dvh w-(--sidebar-width) flex-col overflow-y-auto bg-bar text-bar-ink transition-transform duration-200 ease-out ${
           hidden ? "-translate-x-full" : ""
         }`}
       >
-        {/* The logo's lettering is white: it sits on the gold band, like the phone's top bar. */}
-        <div className="on-bar safe-top flex h-7 shrink-0 items-center bg-bar pl-8 text-bar-ink">
+        {/* The toggle sits at the top-left: the logo starts clear of it. */}
+        <div className="flex h-7 shrink-0 items-center pl-8">
           <Link href={feed.href} className="rounded-sm">
             <Logo height={32} eager />
           </Link>
         </div>
 
-        <div className="flex flex-1 flex-col gap-3 py-3 pr-2 pl-[max(16px,env(safe-area-inset-left))]">
+        <div className="flex flex-1 flex-col gap-3 pt-2 pr-3 pb-3 pl-[max(16px,env(safe-area-inset-left))]">
           <Link
             href={newTask.href}
             aria-current={screen.navItem === "new-task" ? "page" : undefined}
-            className="flex min-h-touch items-center justify-center gap-1 rounded-full bg-side-new text-secondary font-semibold tracking-[1px] text-on-side-new hover:brightness-110"
+            className="flex min-h-touch items-center justify-center gap-1 rounded-full border-2 border-new-task-line bg-new-task text-secondary font-semibold tracking-[1px] text-on-new-task hover:brightness-110"
           >
             <PlusIcon size={18} />
             {newTask.label}
@@ -94,6 +96,8 @@ export default function Sidebar({ userName }: { userName: string }) {
           </SideLink>
         </div>
       </aside>
+
+      {!hidden && <SidebarResizer />}
     </div>
   );
 }

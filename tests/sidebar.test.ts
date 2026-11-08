@@ -1,5 +1,46 @@
 import { describe, expect, it } from "vitest";
-import { SIDEBAR_COOKIE, readSidebarHidden, sidebarCookie } from "@/lib/sidebar";
+import {
+  SIDEBAR_COOKIE,
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_COOKIE,
+  clampSidebarWidth,
+  readSidebarHidden,
+  readSidebarWidth,
+  sidebarCookie,
+  sidebarWidthCookie,
+} from "@/lib/sidebar";
+
+describe("The sidebar's width", () => {
+  it("is the usual width until the person drags it", () => {
+    expect(readSidebarWidth(undefined)).toBe(SIDEBAR_WIDTH.default);
+  });
+
+  it("keeps the width the browser kept", () => {
+    expect(readSidebarWidth("300")).toBe(300);
+  });
+
+  it("is the usual width when the stored value isn't a whole number", () => {
+    expect(readSidebarWidth("")).toBe(SIDEBAR_WIDTH.default);
+    expect(readSidebarWidth("wide")).toBe(SIDEBAR_WIDTH.default);
+    expect(readSidebarWidth("300.5")).toBe(SIDEBAR_WIDTH.default);
+    expect(readSidebarWidth("-300")).toBe(SIDEBAR_WIDTH.default);
+  });
+
+  it("never goes narrower or wider than the limits", () => {
+    expect(readSidebarWidth("10")).toBe(SIDEBAR_WIDTH.min);
+    expect(readSidebarWidth("99999")).toBe(SIDEBAR_WIDTH.max);
+    expect(clampSidebarWidth(SIDEBAR_WIDTH.min - 1)).toBe(SIDEBAR_WIDTH.min);
+    expect(clampSidebarWidth(SIDEBAR_WIDTH.max + 1)).toBe(SIDEBAR_WIDTH.max);
+    expect(clampSidebarWidth(287.6)).toBe(288);
+  });
+
+  it("is kept in a cookie that reads back the same", () => {
+    const cookie = sidebarWidthCookie(320);
+    expect(cookie).toContain(`${SIDEBAR_WIDTH_COOKIE}=320`);
+    expect(cookie).toContain("path=/");
+    expect(cookie).toMatch(/max-age=\d{7,}/);
+  });
+});
 
 describe("The sidebar's shown or hidden choice", () => {
   it("is shown until the person hides it", () => {
