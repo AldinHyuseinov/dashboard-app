@@ -40,6 +40,13 @@ describe("Navigation", () => {
     });
   });
 
+  it("puts New task's second step under New task, going back to choosing the Category", () => {
+    expect(screenAt("/new/bars")).toEqual({
+      navItem: "new-task",
+      back: { href: "/new", label: "Категория" },
+    });
+  });
+
   it("still offers a way back from a Task whose Category doesn't exist", () => {
     expect(screenAt("/category/no-such-category/task-1").back).toEqual({
       href: "/category/no-such-category",

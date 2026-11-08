@@ -106,10 +106,6 @@ export type Task = {
   updatedAt: Date;
 };
 
-export type TaskMetaProps = {
-  task: TaskWithFiles;
-};
-
 export type TaskFileMeta = {
   id: string;
   fileName: string;
@@ -119,17 +115,6 @@ export type TaskFileMeta = {
 export type TaskWithFiles = Task & {
   files: TaskFileMeta[];
   user: { name: string };
-};
-
-export type TaskFormProps = {
-  onClose: () => void;
-  category: string;
-  existingTask?: {
-    id: string;
-    title: string;
-    description: string;
-    files: TaskFileMeta[];
-  };
 };
 
 export type CommentReaction = {
@@ -167,12 +152,8 @@ export type TaskFormState = {
     files?: string[];
     form?: string;
   };
-
-  inputs?: {
-    title: string;
-    description: string;
-  };
-  success?: boolean;
+  /** The Task just published, for the form to say so and link to it. */
+  published?: { href: string; title: string };
 };
 
 export type ProfileFormState = {
@@ -190,18 +171,6 @@ export type ProfileFormState = {
 export type ProcessFilesResult = {
   errors?: { files: string[] };
   processedFiles?: Prisma.TaskFileCreateWithoutTaskInput[];
-};
-
-export type FileMeta = {
-  id: string;
-  fileName: string;
-  fileType: string;
-};
-
-export type SelectedFile = {
-  file: File;
-  previewUrl: string;
-  serverId?: string;
 };
 
 export type AlertBannerProps = {

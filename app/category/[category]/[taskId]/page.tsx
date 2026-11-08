@@ -1,21 +1,34 @@
-// app/category/[category]/[taskId]/page.tsx
+import { Suspense } from "react";
+import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { getActor } from "@/lib/session";
 import { tasks } from "@/lib/tasks";
 import { comments } from "@/lib/comments";
-import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
-import { PdfPreviewLarge } from "@/components/task/FilePreview";
-import TaskMeta from "@/components/task/TaskMeta";
-import DeleteTaskButton from "@/components/task/DeleteTaskButton";
+import { getCategoryLabel } from "@/lib/categories";
+import { MAX_FILES } from "@/lib/constants";
+import { whenShort } from "@/lib/sofia-time";
+import { postedLine } from "@/lib/task-view";
+import { taskHref } from "@/lib/navigation";
+import Alert from "@/components/notification/Alert";
 import TaskCommentsSection from "@/components/comments/TaskCommentsSection";
+import Avatar from "@/components/shell/Avatar";
+import { EditIcon } from "@/components/shell/icons";
 import { MarkTaskOpened } from "@/components/shell/UnreadCount";
+import DeleteTaskButton from "@/components/task/DeleteTaskButton";
+import DoneToggle from "@/components/task/DoneToggle";
+import TaskFiles from "@/components/task/TaskFiles";
 
+/**
+ * A Task: its title, description, Task Owner, Done status and files, then
+ * its Comments. On phones everything is one column; on desktop the status
+ * and details sit in a panel beside it. Opening it marks its Activities read.
+ */
 export default async function TaskDetailPage({
   params,
 }: {
   params: Promise<{ category: string; taskId: string }>;
 }) {
-  const { category, taskId } = await params;
+  const { taskId } = await params;
 
   const actor = await getActor();
   if (!actor) {
@@ -28,134 +41,85 @@ export default async function TaskDetailPage({
   if (!task) return notFound();
 
   const taskComments = await comments.list(actor, taskId);
-
   const isOwner = task.userId === actor.id;
+  const ownerName = task.user.name;
+  const editHref = `${taskHref(task)}/edit`;
 
-  // Helpers to check for file types
-  const hasVideos = task.files.some((f) => f.fileType.startsWith("video/"));
-  const hasOtherFiles = task.files.some((f) => !f.fileType.startsWith("video/"));
+  const ownerActions = isOwner && (
+    <div className="flex flex-wrap gap-1 lg:grid lg:grid-cols-2">
+      <Link href={editHref} className="btn-ghost">
+        <EditIcon size={18} />
+        Редактирай
+      </Link>
+      <DeleteTaskButton taskId={task.id} />
+    </div>
+  );
 
   return (
-    <div className="flex flex-col gap-4 justify-center items-center mx-auto p-4 w-full max-w-md md:max-w-3xl overflow-x-hidden">
+    <div className="flex w-full max-w-[1040px] flex-col gap-3 px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
       <MarkTaskOpened taskId={task.id} shownAt={shownAt} />
-      <div className="bg-white rounded-xl shadow-xl p-6 relative w-full border border-gray-100 min-w-0">
-        {/* Header Metadata */}
-        <div className="border-b border-gray-100 pb-4 mb-4">
-          <h1 className="text-2xl font-bold text-tertiary-brown mb-2 wrap-break-word">
+      <Suspense fallback={null}>
+        <Alert />
+      </Suspense>
+
+      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:gap-x-6 lg:gap-y-4">
+        <header className="flex min-w-0 flex-col gap-1 lg:col-start-1 lg:row-start-1">
+          <p className="eyebrow text-gold-ink">{getCategoryLabel(task.category) ?? task.category}</p>
+          <h1 className="font-display text-display-sm font-light tracking-[-1px] wrap-break-word lg:text-display-lg">
             {task.title}
           </h1>
-          <TaskMeta task={task} />
+          {/* On desktop the panel beside the Task says who posted it and when. */}
+          <p className="flex items-center gap-1 text-meta text-ink-2 lg:hidden">
+            <Avatar name={ownerName} size="sm" />
+            <span>
+              <strong className="font-semibold text-ink">{ownerName}</strong> · {postedLine(task, shownAt)}
+            </span>
+          </p>
+        </header>
+
+        <aside
+          aria-label="Данни за задачата"
+          className="flex flex-col gap-2 lg:sticky lg:top-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:rounded-card lg:border lg:border-line lg:bg-surface lg:p-3"
+        >
+          <DoneToggle taskId={task.id} isDone={task.isDone} />
+          <dl className="hidden grid-cols-2 gap-2 lg:grid">
+            <div className="col-span-2 flex flex-col gap-0.5">
+              <dt className="eyebrow text-ink-2">Публикувана от</dt>
+              <dd className="flex items-center gap-1 text-secondary font-semibold">
+                <Avatar name={ownerName} size="sm" />
+                {ownerName}
+              </dd>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <dt className="eyebrow text-ink-2">Създадена</dt>
+              <dd className="text-secondary">{whenShort(task.createdAt, shownAt)}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <dt className="eyebrow text-ink-2">Обновена</dt>
+              <dd className="text-secondary">{whenShort(task.updatedAt, shownAt)}</dd>
+            </div>
+            <div className="col-span-2 flex flex-col gap-0.5">
+              <dt className="eyebrow text-ink-2">Файлове</dt>
+              <dd className="text-secondary">
+                {task.files.length} от {MAX_FILES}
+              </dd>
+            </div>
+          </dl>
+          {ownerActions && <div className="lg:border-t lg:border-line lg:pt-2">{ownerActions}</div>}
+        </aside>
+
+        <div className="flex min-w-0 flex-col gap-3 lg:col-start-1 lg:row-start-2 lg:gap-4">
+          <p className="max-w-[680px] text-body whitespace-pre-wrap wrap-break-word">{task.description}</p>
+          <TaskFiles files={task.files} />
+          <TaskCommentsSection
+            taskId={task.id}
+            taskOwnerId={task.userId}
+            taskOwnerName={ownerName}
+            initialComments={taskComments}
+            viewer={actor}
+            now={shownAt}
+          />
         </div>
-
-        {/* Text Description */}
-        <p className="text-sm text-gray-700 whitespace-pre-wrap wrap-break-word leading-relaxed mb-8 bg-gray-50/50 p-4 rounded-lg border border-gray-100 w-full overflow-hidden">
-          {task.description}
-        </p>
-
-        {/* Image/PDF/Video Attachment Thumbnails */}
-        {task.files && task.files.length > 0 && (
-          <div className="mb-4">
-            {/* 1. Video Playback Section (Inline player for immediate viewing) */}
-            {hasVideos && (
-              <div className="mb-4 pb-8">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-                  Видеa
-                </h3>
-                <div className="flex flex-col gap-6">
-                  {task.files
-                    .filter((f) => f.fileType.startsWith("video/"))
-                    .map((file) => (
-                      <div
-                        key={file.id}
-                        className="w-full rounded-lg overflow-hidden border border-gray-200 bg-black"
-                      >
-                        {/* Fetched in byte ranges as it plays; #t=0.1 shows the first frame on iPhones. */}
-                        <video
-                          src={`/api/files/${file.id}#t=0.1`}
-                          controls
-                          playsInline
-                          preload="metadata"
-                          className="w-full h-full animate-all"
-                        />
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* 2. Attached Files Section (Only rendered if there are actual non-video files) */}
-            {hasOtherFiles && (
-              <div className="mb-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-                  Прикачени файлове
-                </h3>
-                <div className="flex justify-center flex-wrap gap-4">
-                  {task.files
-                    .filter((f) => !f.fileType.startsWith("video/"))
-                    .map((file) => {
-                      const isImage = file.fileType.startsWith("image/");
-                      return (
-                        <a
-                          key={file.id}
-                          href={`/api/files/${file.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={file.fileName}
-                        >
-                          {isImage ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={`/api/files/${file.id}`}
-                              alt={file.fileName}
-                              className="w-32 h-32 object-cover rounded-md border border-gray-200 hover:border-primary-gold transition-all hover:scale-105"
-                            />
-                          ) : (
-                            <PdfPreviewLarge
-                              fileName={file.fileName}
-                              styleCondition={task.isDone}
-                            />
-                          )}
-                        </a>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Actions Footer */}
-        <div className="flex gap-4 justify-end mt-2 pt-2 border-t border-gray-100">
-          <Link
-            href={`/category/${category}`}
-            className="px-4 py-4 rounded-md text-gray-600 text-sm hover:bg-gray-100 transition font-medium"
-          >
-            Назад
-          </Link>
-
-          {/* EDIT BUTTON (Only visible to the owner of the task) */}
-          {isOwner && (
-            <Link
-              href={`/category/${category}/${task.id}/edit`}
-              className="px-2 py-4 bg-primary-gold hover:brightness-95 text-on-gold rounded-md text-sm font-bold transition shadow-sm"
-            >
-              Редактирай
-            </Link>
-          )}
-          {isOwner && <DeleteTaskButton taskId={task.id} />}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-xl p-4 w-full border border-gray-100 min-w-0">
-        <h2 className="text-lg font-bold mb-4 text-tertiary-brown border-b border-gray-100 pb-4">
-          Коментари
-        </h2>
-        <TaskCommentsSection
-          taskId={task.id}
-          taskOwnerId={task.userId}
-          initialComments={taskComments}
-          currentUserId={actor.id}
-        />
       </div>
     </div>
   );

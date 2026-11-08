@@ -4,6 +4,7 @@
  * with the times shown, in Sofia time.
  */
 
+import { firstName } from "@/lib/utils";
 import type { ActivityType, FeedItem } from "@/lib/activity";
 import { calendarDate, dayOf, isDayBefore, timeOfDay, whenShort } from "@/lib/sofia-time";
 
@@ -17,7 +18,6 @@ const DID: Record<Exclude<ActivityType, "reply-posted">, readonly [string, strin
   "comment-posted": ["коментира", "коментирахте"],
 };
 
-const firstName = (name: string) => name.trim().split(/\s+/)[0];
 
 /**
  * Who did what, for the person `viewerId` looking at the Feed: "Вие" for

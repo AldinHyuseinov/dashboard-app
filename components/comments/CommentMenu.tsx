@@ -1,191 +1,150 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { REACTION_EMOJIS } from "@/lib/constants";
+import { useEffect, useId, useRef, useState } from "react";
+import { EditIcon, MoreIcon, PinIcon, TrashIcon } from "@/components/shell/icons";
 
+/**
+ * More things to do with a Comment, offered only to those allowed: pin or
+ * unpin (the Task Owner, on a top-level Comment), edit and delete (the
+ * author). Deleting asks first.
+ */
 export default function CommentMenu({
-  canDelete,
-  canEdit,
+  authorName,
   canPin,
   isPinned,
-  onReact,
-  onDelete,
-  onEdit,
+  canEdit,
+  canDelete,
+  hasReplies,
   onPin,
-  activeReactions,
+  onEdit,
+  onDelete,
 }: {
-  canDelete: boolean;
-  canEdit: boolean;
+  authorName: string;
   canPin: boolean;
   isPinned: boolean;
-  onReact: (emoji: string) => void;
-  onDelete: () => void;
+  canEdit: boolean;
+  canDelete: boolean;
+  hasReplies: boolean;
+  onPin: () => void;
   onEdit: () => void;
-  onPin?: () => void;
-  activeReactions: string[]; // emojis the current user has already reacted with
+  onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
+
+  const close = (returnFocus: boolean) => {
+    setOpen(false);
+    setConfirmingDelete(false);
+    if (returnFocus) triggerRef.current?.focus();
+  };
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-        setConfirmingDelete(false);
-      }
+    if (!open) return;
+    const dismiss = () => {
+      setOpen(false);
+      setConfirmingDelete(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    const onPointerDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) dismiss();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      dismiss();
+      triggerRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const item =
+    "flex min-h-touch w-full cursor-pointer items-center gap-1.5 px-2 text-left text-secondary font-semibold transition-colors hover:bg-hover";
 
   return (
-    <div className="relative shrink-0" ref={ref}>
-      {/* Trigger: was accidentally sized down to 12px — smaller
-          than its own 14px icon, which is what made the dots render broken
-          and made the button nearly untappable on mobile. Restored to a
-          real tap target. */}
+    <div ref={rootRef} className="relative -my-1 -mr-1 shrink-0">
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Опции"
-        className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+        aria-label={`Още за коментара на ${authorName}`}
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        onClick={() => (open ? close(false) : setOpen(true))}
+        className="flex size-touch cursor-pointer items-center justify-center rounded-full text-ink-2 transition-colors hover:bg-hover hover:text-ink"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
-          <circle cx="12" cy="5" r="2" />
-          <circle cx="12" cy="12" r="2" />
-          <circle cx="12" cy="19" r="2" />
-        </svg>
+        <MoreIcon size={20} />
       </button>
 
       {open && (
         <div
-          className="absolute -right-4 top-6 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-3 flex flex-col"
-          style={{ width: "224px", maxWidth: "calc(100vw - 2rem)" }}
+          id={menuId}
+          className="absolute top-full right-0 z-20 flex w-[248px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-card border border-line bg-surface py-0.5 shadow-lg"
         >
-          {/* Emoji grid: a plain CSS grid (4 columns) instead of flex-wrap.
-              The previous flex-wrap version relied on an arbitrary Tailwind
-              min() width value that collapsed unpredictably, causing every
-              emoji to stack one-per-row instead of flowing side by side.
-              A fixed 4-column grid can't collapse like that regardless of
-              how the popover's own width resolves. */}
-          <div className="px-5 pb-3 mb-2 border-b border-gray-100 grid grid-cols-4 gap-2 justify-items-center">
-            {REACTION_EMOJIS.map((emoji) => {
-              const active = activeReactions.includes(emoji);
-              return (
+          {confirmingDelete ? (
+            <div role="alert" className="flex flex-col gap-1 p-2">
+              <p className="text-secondary font-semibold">
+                {hasReplies ? "Да изтрием ли коментара и отговорите му?" : "Да изтрием ли коментара?"}
+              </p>
+              <div className="flex gap-1">
                 <button
-                  key={emoji}
+                  type="button"
+                  autoFocus
+                  onClick={() => {
+                    close(false);
+                    onDelete();
+                  }}
+                  className="btn-ghost flex-1 text-error"
+                >
+                  Изтрий
+                </button>
+                <button type="button" onClick={() => close(true)} className="btn-ghost flex-1">
+                  Отказ
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {canPin && (
+                <button
                   type="button"
                   onClick={() => {
-                    onReact(emoji);
-                    setOpen(false);
+                    close(true);
+                    onPin();
                   }}
-                  className={`text-base w-6 h-6 flex items-center justify-center rounded-full transition-transform hover:scale-125 cursor-pointer ${
-                    active ? "bg-yellow-100 ring-1 ring-primary-gold" : "hover:bg-gray-100"
-                  }`}
+                  className={item}
                 >
-                  {emoji}
+                  <PinIcon size={18} className="text-ink-2" />
+                  {isPinned ? "Откачи коментара" : "Закачи най-отгоре"}
                 </button>
-              );
-            })}
-          </div>
-
-          {canPin && onPin && (
-            <button
-              type="button"
-              onClick={() => {
-                onPin();
-                setOpen(false);
-              }}
-              className="text-left px-5 py-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3"
-            >
-              <PinIcon />
-              {isPinned ? "Откачи коментар" : "Закачи коментар"}
-            </button>
-          )}
-
-          {canEdit && (
-            <button
-              type="button"
-              onClick={() => {
-                onEdit();
-                setOpen(false);
-              }}
-              className="text-left px-5 py-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-3"
-            >
-              <EditIcon />
-              Редактирай
-            </button>
-          )}
-
-          {canDelete && (
-            <>
-              {!confirmingDelete ? (
+              )}
+              {canEdit && (
                 <button
                   type="button"
-                  onClick={() => setConfirmingDelete(true)}
-                  className="text-left px-5 py-3 text-xs font-semibold text-red-500 hover:bg-red-50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    close(false);
+                    onEdit();
+                  }}
+                  className={item}
                 >
-                  Изтрий коментар
+                  <EditIcon size={18} className="text-ink-2" />
+                  Редактирай
                 </button>
-              ) : (
-                <div className="px-5 py-3 flex flex-col gap-2">
-                  <span className="text-[11px] text-gray-500">Сигурни ли сте?</span>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onDelete();
-                        setOpen(false);
-                        setConfirmingDelete(false);
-                      }}
-                      className="flex-1 text-[11px] font-bold text-on-berry bg-red-700 hover:bg-red-800 rounded px-4 py-2 cursor-pointer transition-colors"
-                    >
-                      Изтрий
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingDelete(false)}
-                      className="flex-1 text-[11px] font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded px-4 py-2 cursor-pointer transition-colors"
-                    >
-                      Отказ
-                    </button>
-                  </div>
-                </div>
+              )}
+              {canDelete && (
+                <button type="button" onClick={() => setConfirmingDelete(true)} className={`${item} text-error`}>
+                  <TrashIcon size={18} />
+                  Изтрий
+                </button>
               )}
             </>
           )}
         </div>
       )}
     </div>
-  );
-}
-
-function PinIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
-      <path d="M16 3l5 5-5.5 5.5L17 16l-5 5-2-6-5 5v-2l5-5-6-2 5-5L11 8.5 16 3z" />
-    </svg>
-  );
-}
-
-function EditIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className="shrink-0"
-    >
-      <path d="M12 20h9" strokeLinecap="round" />
-      <path
-        d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

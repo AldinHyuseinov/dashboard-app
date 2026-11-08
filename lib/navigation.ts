@@ -22,6 +22,11 @@ export type Screen = {
   readonly back: BackLink | null;
 };
 
+/** A Task's screen. */
+export function taskHref(task: { id: string; category: string }): string {
+  return `/category/${task.category}/${task.id}`;
+}
+
 /** The top-level destinations, in display order. */
 export const NAV_ITEMS: readonly NavItem[] = [
   { id: "feed", href: "/", label: "Активност" },
@@ -44,6 +49,10 @@ export function screenAt(pathname: string): Screen {
   if (topLevel) return { navItem: topLevel.id, back: null };
 
   const [section, category, taskOrAction, taskAction] = segments;
+  // New task's second step, once the Category is chosen.
+  if (section === "new" && category) {
+    return { navItem: "new-task", back: { href: "/new", label: "Категория" } };
+  }
   if (section === "category" && category) {
     const categoryHref = `/category/${category}`;
     const toCategory = { href: categoryHref, label: getCategoryLabel(category) ?? "Назад" };

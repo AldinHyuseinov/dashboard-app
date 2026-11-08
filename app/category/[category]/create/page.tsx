@@ -1,14 +1,13 @@
-import TaskForm from "@/components/task/TaskForm";
-import { auth } from "@/lib/auth";
 import { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import NewTaskScreen from "@/components/task/NewTaskScreen";
 import { isCategory } from "@/lib/categories";
 
 export const metadata: Metadata = {
-  title: "Avexim Communication | Добавяне на задача",
+  title: "Avexim Communication | Нова задача",
 };
 
+/** New task, posted straight from a Category's Task list. */
 export default async function CreateTaskPage({
   params,
 }: {
@@ -19,12 +18,9 @@ export default async function CreateTaskPage({
     notFound();
   }
 
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    redirect("/login?not-authorized=true");
-  } else if (session && !session.user.emailVerified) {
-    redirect(`/category/${category}?verify-email=true`);
-  }
-
-  return <TaskForm category={category} />;
+  return (
+    <div className="flex w-full max-w-[1040px] flex-col px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
+      <NewTaskScreen category={category} secondStep={false} cancelHref={`/category/${category}`} />
+    </div>
+  );
 }

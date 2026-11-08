@@ -12,7 +12,6 @@ export default function Alert() {
 
   const requiresVerification = searchParams.get("verify-email") === "true";
   const isVerified = searchParams.get("verified") === "true";
-  const succesfullTask = searchParams.get("success") === "true";
   const succesfullLogin = searchParams.get("success-login") === "true";
   const updatedTask = searchParams.get("updated") === "true";
   const deletedTask = searchParams.get("deleted") === "true";
@@ -22,7 +21,6 @@ export default function Alert() {
     !isVisible ||
     (!requiresVerification &&
       !isVerified &&
-      !succesfullTask &&
       !succesfullLogin &&
       !updatedTask &&
       !deletedTask)
@@ -71,12 +69,6 @@ export default function Alert() {
             </Link>
             .
           </span>
-        </AlertBanner>
-      );
-    } else if (succesfullTask) {
-      return (
-        <AlertBanner type="success" onClose={handleClose}>
-          <span>Задачата е успешно създадена.</span>
         </AlertBanner>
       );
     } else if (updatedTask) {

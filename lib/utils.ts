@@ -8,6 +8,9 @@ export const formatDate = (date: Date) => {
   }).format(new Date(date));
 };
 
+/** The first word of a person's name, as people address each other: "Елена Стоянова" → "Елена". */
+export const firstName = (name: string) => name.trim().split(/\s+/)[0];
+
 /** Up to two initials from a person's name, for an avatar: "Елена Стоянова" → "ЕС". */
 export const initials = (name: string) =>
   name

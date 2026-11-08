@@ -2,6 +2,7 @@ import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
+import { MAX_VIDEO_SECONDS } from "@/lib/constants";
 
 export async function compressVideo(buffer: Buffer): Promise<Buffer> {
   const tempInput = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
@@ -16,7 +17,7 @@ export async function compressVideo(buffer: Buffer): Promise<Buffer> {
       "-i",
       tempInput,
       "-t",
-      "300", // 5 minutes limit in seconds
+      String(MAX_VIDEO_SECONDS),
       "-c:v",
       "libx264",
       "-c:a",
