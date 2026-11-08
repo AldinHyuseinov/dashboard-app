@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { listCategorySections, type Category } from "@/lib/categories";
 import { navItem, screenAt } from "@/lib/navigation";
-import { initials } from "@/lib/utils";
+import type { Person } from "@/lib/types";
+import Avatar from "./Avatar";
 import { FeedIcon, PlusIcon } from "./icons";
 import Logo from "./Logo";
 import { useSidebar } from "./ShellFrame";
@@ -18,7 +19,7 @@ import { useUnreadCount } from "./UnreadCount";
  * Hidden on phones, where the bottom bar takes over. On desktop it can also
  * be hidden with the toggle (see ShellFrame) and dragged wider or narrower.
  */
-export default function Sidebar({ userName }: { userName: string }) {
+export default function Sidebar({ user }: { user: Person }) {
   const pathname = usePathname();
   const unreadCount = useUnreadCount();
   const screen = screenAt(pathname);
@@ -85,13 +86,8 @@ export default function Sidebar({ userName }: { userName: string }) {
             isCurrent={screen.navItem === "profile"}
             className="mt-auto"
           >
-            <span
-              aria-hidden="true"
-              className="-ml-0.5 flex size-3.5 shrink-0 items-center justify-center rounded-full bg-side-new text-[11px] font-bold text-on-side-new"
-            >
-              {initials(userName)}
-            </span>
-            <span className="min-w-0 truncate">{userName}</span>
+            <Avatar name={user.name} image={user.image} size="chip" tone="sidebar" />
+            <span className="min-w-0 truncate">{user.name}</span>
             <span className="sr-only">, {profile.label}</span>
           </SideLink>
         </div>

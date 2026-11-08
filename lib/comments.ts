@@ -206,13 +206,13 @@ export function createComments({ notifications }: CommentDeps) {
     return { ok: true, comment: comment.ref };
   }
 
-  /** A Task's Comments and Replies, oldest first, with authors' names and Reactions. */
+  /** A Task's Comments and Replies, oldest first, with authors' names and Profile picture addresses, and Reactions. */
   async function list(actor: Actor, taskId: string) {
     return prisma.comment.findMany({
       where: { taskId },
       orderBy: { createdAt: "asc" },
       include: {
-        user: { select: { name: true } },
+        user: { select: { name: true, image: true } },
         reactions: { include: { user: { select: { name: true } } } },
       },
     });

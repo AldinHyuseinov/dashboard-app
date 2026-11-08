@@ -1,6 +1,6 @@
 import { activity } from "@/lib/activity";
 import { deviceSidebar } from "@/lib/device-sidebar";
-import { getActor } from "@/lib/session";
+import { getViewer } from "@/lib/session";
 import BottomBar from "./BottomBar";
 import ScreenBar from "./ScreenBar";
 import ShellFrame from "./ShellFrame";
@@ -15,9 +15,9 @@ import { UnreadCountProvider } from "./UnreadCount";
  * first render is already right.
  */
 export default async function AppShell({ children }: { children: React.ReactNode }) {
-  const actor = await getActor();
+  const viewer = await getViewer();
 
-  if (!actor) {
+  if (!viewer) {
     return (
       <main id="main" className="flex min-h-dvh flex-col">
         {children}
@@ -28,9 +28,9 @@ export default async function AppShell({ children }: { children: React.ReactNode
   const sidebar = await deviceSidebar();
 
   return (
-    <UnreadCountProvider initialCount={await activity.unreadCount(actor)}>
+    <UnreadCountProvider initialCount={await activity.unreadCount(viewer)}>
       <ShellFrame initialHidden={sidebar.hidden} initialWidth={sidebar.width}>
-        <Sidebar userName={actor.name} />
+        <Sidebar user={viewer} />
 
         <div className="flex min-w-0 flex-1 flex-col">
           <ScreenBar />

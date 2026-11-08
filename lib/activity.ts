@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
 import { categoryLabelOrSlug } from "@/lib/categories";
 import { EDIT_MERGE_WINDOW_MS, FEED_ITEMS_PER_PAGE } from "@/lib/constants";
+import type { Person } from "@/lib/types";
 
 /** What happened. Reactions are not Activities. */
 export type ActivityType =
@@ -23,7 +24,8 @@ export type ActivityTask = { id: string; title: string; category: string };
 export type FeedItem = {
   id: string;
   type: ActivityType;
-  actor: { id: string; name: string };
+  /** Who caused it. */
+  actor: Person & { id: string };
   occurredAt: Date;
   /**
    * The Task's current title while it exists. Once it's deleted, its last
@@ -230,7 +232,7 @@ export function createActivity() {
       orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
       take: FEED_ITEMS_PER_PAGE + 1,
       include: {
-        actor: { select: { id: true, name: true } },
+        actor: { select: { id: true, name: true, image: true } },
         comment: {
           select: {
             id: true,

@@ -46,7 +46,7 @@ function saveFailure(error: unknown, logLabel: string): TaskResult {
 
 const TASK_DETAILS = {
   files: { select: { id: true, fileName: true, fileType: true } },
-  user: { select: { name: true } },
+  user: { select: { name: true, image: true } },
 } as const;
 
 /**

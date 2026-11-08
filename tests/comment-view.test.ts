@@ -35,7 +35,7 @@ function comment({
     text,
     createdAt: new Date(at),
     userId: by,
-    user: { name: NAMES[by] },
+    user: { name: NAMES[by], image: null },
     parentId,
     answersId,
     isPinned,

@@ -5,7 +5,7 @@ import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { createComments } from "@/lib/comments";
 import type { Actor } from "@/lib/actor";
-import { createUser } from "./support/fixtures";
+import { createUser, givePicture } from "./support/fixtures";
 
 const MONDAY_9AM = new Date("2026-11-02T09:00:00Z");
 const MONDAY_10AM = new Date("2026-11-02T10:00:00Z");
@@ -63,7 +63,7 @@ describe("Tasks", () => {
         category: "golf-clubs",
         isDone: false,
         userId: ivan.id,
-        user: { name: "Ivan" },
+        user: { name: "Ivan", image: null },
         files: [],
         createdAt: MONDAY_9AM,
         updatedAt: MONDAY_9AM,
@@ -72,6 +72,22 @@ describe("Tasks", () => {
       expect(emails.sent[0].to).toEqual(["maria@avexim.test"]);
       expect(emails.sent[0].subject).toBe("Известие за задача");
       expect(emails.sent[0].html).toContain("Създадена нова задача в категория: Голф Клубове");
+    });
+
+    it("the Task carries its Owner's Profile picture address when they have one", async () => {
+      const ivan = await createUser("Ivan");
+      const ivans = await givePicture(ivan);
+
+      const result = await tasks.create(ivan, {
+        title: "Нова винена листа",
+        description: "Да се обнови до петък",
+        category: "golf-clubs",
+        fileIds: [],
+        now: MONDAY_9AM,
+      });
+      if (!result.ok) throw new Error("Could not post a Task");
+
+      expect(await tasks.get(ivan, result.task.id)).toMatchObject({ user: { name: "Ivan", image: ivans } });
     });
 
     it.each([

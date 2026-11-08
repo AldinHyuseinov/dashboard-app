@@ -5,7 +5,7 @@ import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { createComments } from "@/lib/comments";
 import type { Actor } from "@/lib/actor";
-import { createUser } from "./support/fixtures";
+import { createUser, givePicture } from "./support/fixtures";
 
 const MONDAY_9AM = new Date("2026-11-02T09:00:00Z");
 const MONDAY_10AM = new Date("2026-11-02T10:00:00Z");
@@ -515,6 +515,22 @@ describe("Comments", () => {
       const result = await comments.react(ivan, { commentId: "no-such-comment", emoji: "👍" });
 
       expect(result).toEqual({ ok: false, error: "Коментарът не е намерен." });
+    });
+  });
+
+  describe("Profile pictures", () => {
+    it("each Comment and Reply carries its author's picture address, or none when they have no picture", async () => {
+      const ivan = await createUser("Ivan");
+      const maria = await createUser("Maria");
+      const marias = await givePicture(maria);
+      const task = await postTask(ivan);
+      const comment = await post(maria, task.id, "Кога?");
+      await post(ivan, task.id, "До петък", comment.id);
+
+      expect((await comments.list(ivan, task.id)).map((c) => c.user)).toEqual([
+        { name: "Maria", image: marias },
+        { name: "Ivan", image: null },
+      ]);
     });
   });
 

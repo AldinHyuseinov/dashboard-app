@@ -8,8 +8,9 @@ import { createNotifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { createComments } from "@/lib/comments";
 import { activity, type FeedPage } from "@/lib/activity";
+import { profilePictures } from "@/lib/profile-pictures";
 import type { Actor } from "@/lib/actor";
-import { createUser } from "./support/fixtures";
+import { createUser, givePicture } from "./support/fixtures";
 
 const MONDAY_9AM = new Date("2026-11-02T09:00:00Z");
 const MONDAY_10AM = new Date("2026-11-02T10:00:00Z");
@@ -66,7 +67,7 @@ describe("Activity Feed", () => {
         {
           id: expect.any(String),
           type: "task-created",
-          actor: { id: ivan.id, name: "Ivan" },
+          actor: { id: ivan.id, name: "Ivan", image: null },
           occurredAt: MONDAY_9AM,
           task: {
             id: task.id,
@@ -220,6 +221,35 @@ describe("Activity Feed", () => {
 
       const feed = await activity.feed(ivan, {});
       expect(feed.items.map((item) => item.type)).toEqual(["comment-posted", "task-created"]);
+    });
+  });
+
+  describe("Profile pictures", () => {
+    it("each item carries its Actor's picture address, or none when they have no picture", async () => {
+      const ivan = await createUser("Ivan");
+      const maria = await createUser("Maria");
+      const marias = await givePicture(maria);
+      const task = await postTask(ivan);
+      await post(maria, task.id, "Кога трябва да е готово?");
+
+      const feed = await activity.feed(ivan, {});
+      expect(feed.items.map((item) => item.actor)).toEqual([
+        { id: maria.id, name: "Maria", image: marias },
+        { id: ivan.id, name: "Ivan", image: null },
+      ]);
+    });
+
+    it("a replaced or removed picture changes on every item of that person", async () => {
+      const ivan = await createUser("Ivan");
+      await givePicture(ivan, MONDAY_9AM);
+      const task = await postTask(ivan);
+      await post(ivan, task.id, "Ето я");
+
+      const replaced = await givePicture(ivan, MONDAY_NOON);
+      expect((await activity.feed(ivan, {})).items.map((item) => item.actor.image)).toEqual([replaced, replaced]);
+
+      await profilePictures.remove(ivan, { now: MONDAY_NOON });
+      expect((await activity.feed(ivan, {})).items.map((item) => item.actor.image)).toEqual([null, null]);
     });
   });
 

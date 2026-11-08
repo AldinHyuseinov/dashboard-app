@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
+import sharp from "sharp";
 import { prisma } from "@/lib/prisma";
 import { files } from "@/lib/files";
+import { profilePictures } from "@/lib/profile-pictures";
 import type { Actor } from "@/lib/actor";
 
 /** Creates a staff member. The email is derived from the name unless given. */
@@ -28,6 +30,19 @@ export async function uploadFile(
   });
   if (!result.ok) throw new Error(`Could not upload a file: ${result.error}`);
   return result.file;
+}
+
+/** Gives `user` a Profile picture set at `now`, through the Profile pictures module. Returns its address. */
+export async function givePicture(user: Actor, now = new Date("2026-11-02T08:00:00Z")) {
+  const photo = await sharp({ create: { width: 64, height: 64, channels: 3, background: "#c9a227" } })
+    .png()
+    .toBuffer();
+  const result = await profilePictures.set(user, {
+    file: new File([new Uint8Array(photo)], "аз.png", { type: "image/png" }),
+    now,
+  });
+  if (!result.ok) throw new Error(`Could not set a Profile picture: ${result.error}`);
+  return result.image;
 }
 
 /** Everything a successful `files.read` streams, as one Buffer. */

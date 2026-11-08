@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { FeedItem } from "@/lib/activity";
 import { describeActivity } from "@/lib/feed-view";
-import { initials } from "@/lib/utils";
+import Avatar from "@/components/shell/Avatar";
 import { TrashIcon } from "@/components/shell/icons";
 
 /**
@@ -25,12 +25,7 @@ export default function FeedRow({
 
   const content = (
     <>
-      <span
-        aria-hidden="true"
-        className="flex size-5 shrink-0 items-center justify-center rounded-full bg-tint text-secondary font-semibold text-gold-ink"
-      >
-        {initials(item.actor.name)}
-      </span>
+      <Avatar name={item.actor.name} image={item.actor.image} size="feed" />
 
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center justify-between gap-1 text-meta text-ink-2 lg:gap-2 lg:text-secondary">

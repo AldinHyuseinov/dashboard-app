@@ -16,7 +16,7 @@ import {
   replyMention,
   unsavedId,
 } from "@/lib/comment-view";
-import type { Comment, SortMode } from "@/lib/types";
+import type { Comment, Person, SortMode } from "@/lib/types";
 import { PinIcon } from "@/components/shell/icons";
 import CommentComposer from "./CommentComposer";
 import CommentItem from "./CommentItem";
@@ -34,7 +34,7 @@ function commentsSignature(comments: Comment[]): string {
         .map((r) => `${r.userId}:${r.emoji}`)
         .sort()
         .join(",");
-      return `${c.id}|${c.text}|${c.isPinned ? "p" : ""}|${c.editedAt ?? ""}|${rx}`;
+      return `${c.id}|${c.text}|${c.user?.image ?? ""}|${c.isPinned ? "p" : ""}|${c.editedAt ?? ""}|${rx}`;
     })
     .sort()
     .join(";");
@@ -58,7 +58,7 @@ export default function TaskCommentsSection({
   taskOwnerId: string;
   taskOwnerName: string;
   initialComments: Comment[];
-  viewer: { id: string; name: string };
+  viewer: Person & { id: string };
   /** When the Task was read, for showing when each Comment was posted. */
   now: Date;
 }) {
@@ -145,7 +145,7 @@ export default function TaskCommentsSection({
     id: unsavedId(),
     text,
     userId: viewer.id,
-    user: { name: viewer.name },
+    user: { name: viewer.name, image: viewer.image },
     createdAt: new Date(),
     parentId: null,
     reactions: [],
@@ -296,7 +296,7 @@ export default function TaskCommentsSection({
         replyingTo={replyTo?.name ?? null}
         onCancelReply={() => setReplyTo(null)}
         onSubmit={submit}
-        viewerName={viewer.name}
+        viewer={viewer}
       />
 
       {failure && (

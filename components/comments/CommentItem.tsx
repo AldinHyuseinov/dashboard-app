@@ -74,7 +74,7 @@ export default function CommentItem({
 
   return (
     <article id={`comment-${comment.id}`} className={`flex ${isReply ? "gap-1 lg:gap-2" : "gap-2"}`}>
-      <Avatar name={authorName} size={isReply ? "sm" : "md"} />
+      <Avatar name={authorName} image={comment.user.image} size={isReply ? "sm" : "md"} />
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-start justify-between gap-1">

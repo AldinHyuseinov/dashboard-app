@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { getActor } from "@/lib/session";
+import { getViewer } from "@/lib/session";
 import { tasks } from "@/lib/tasks";
 import { comments } from "@/lib/comments";
 import { getCategoryLabel } from "@/lib/categories";
@@ -30,19 +30,20 @@ export default async function TaskDetailPage({
 }) {
   const { taskId } = await params;
 
-  const actor = await getActor();
-  if (!actor) {
+  const viewer = await getViewer();
+  if (!viewer) {
     redirect("/login?not-authorized=true");
   }
 
   // Taken before the Task is read: anything newer may be missing from it, so stays Unread.
   const shownAt = new Date();
-  const task = await tasks.get(actor, taskId);
+  const task = await tasks.get(viewer, taskId);
   if (!task) return notFound();
 
-  const taskComments = await comments.list(actor, taskId);
-  const isOwner = task.userId === actor.id;
+  const taskComments = await comments.list(viewer, taskId);
+  const isOwner = task.userId === viewer.id;
   const ownerName = task.user.name;
+  const ownerImage = task.user.image;
   const editHref = `${taskHref(task)}/edit`;
 
   const ownerActions = isOwner && (
@@ -70,7 +71,7 @@ export default async function TaskDetailPage({
           </h1>
           {/* On desktop the panel beside the Task says who posted it and when. */}
           <p className="flex items-center gap-1 text-meta text-ink-2 lg:hidden">
-            <Avatar name={ownerName} size="sm" />
+            <Avatar name={ownerName} image={ownerImage} size="sm" />
             <span>
               <strong className="font-semibold text-ink">{ownerName}</strong> · {postedLine(task, shownAt)}
             </span>
@@ -86,7 +87,7 @@ export default async function TaskDetailPage({
             <div className="col-span-2 flex flex-col gap-0.5">
               <dt className="eyebrow text-ink-2">Публикувана от</dt>
               <dd className="flex items-center gap-1 text-secondary font-semibold">
-                <Avatar name={ownerName} size="sm" />
+                <Avatar name={ownerName} image={ownerImage} size="sm" />
                 {ownerName}
               </dd>
             </div>
@@ -116,7 +117,7 @@ export default async function TaskDetailPage({
             taskOwnerId={task.userId}
             taskOwnerName={ownerName}
             initialComments={taskComments}
-            viewer={actor}
+            viewer={viewer}
             now={shownAt}
           />
         </div>

@@ -32,9 +32,13 @@ export type TaskFileMeta = {
   fileType: string;
 };
 
+/** A person as the screens show them: their name, and the address of their Profile picture or `null` without one. */
+export type Person = { name: string; image: string | null };
+
 export type TaskWithFiles = Task & {
   files: TaskFileMeta[];
-  user: { name: string };
+  /** The Task Owner. */
+  user: Person;
 };
 
 export type CommentReaction = {
@@ -51,7 +55,8 @@ export type Comment = {
   editedAt?: Date | null;
   isPinned?: boolean;
   userId: string;
-  user: { name: string | null };
+  /** The author, with the address of their Profile picture, or `null` without one. */
+  user: { name: string | null; image: string | null };
   parentId?: string | null;
   /** The Comment a Reply answers: its top-level Comment or another Reply in the thread. */
   answersId?: string | null;

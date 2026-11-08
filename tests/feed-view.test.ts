@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { ActivityType, FeedItem } from "@/lib/activity";
 import { describeActivity, feedSections } from "@/lib/feed-view";
 
-const IVAN = { id: "ivan", name: "Иван Георгиев" };
-const MARIA = { id: "maria", name: "Мария Петрова" };
+const IVAN = { id: "ivan", name: "Иван Георгиев", image: null };
+const MARIA = { id: "maria", name: "Мария Петрова", image: null };
 
 // Sofia is two hours ahead of UTC in November: this is Wednesday 4 November, 14:30 there.
 const NOW = new Date("2026-11-04T12:30:00Z");
@@ -17,7 +17,7 @@ function item({
   repliesTo = null,
 }: {
   type?: ActivityType;
-  actor?: { id: string; name: string };
+  actor?: FeedItem["actor"];
   at?: Date | string;
   unread?: boolean;
   repliesTo?: { id: string; name: string } | null;

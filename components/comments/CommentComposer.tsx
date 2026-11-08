@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type RefObject } from "react";
+import type { Person } from "@/lib/types";
 import Avatar from "@/components/shell/Avatar";
 import { CloseIcon, SendIcon } from "@/components/shell/icons";
 
@@ -13,7 +14,7 @@ export default function CommentComposer({
   replyingTo,
   onCancelReply,
   onSubmit,
-  viewerName,
+  viewer,
 }: {
   inputRef: RefObject<HTMLTextAreaElement | null>;
   /** The name of whoever the Reply answers, or `null` for a Comment. */
@@ -21,7 +22,8 @@ export default function CommentComposer({
   onCancelReply: () => void;
   /** Posts the text; resolves `false` if that failed. */
   onSubmit: (text: string) => Promise<boolean>;
-  viewerName: string;
+  /** Who is writing. */
+  viewer: Person;
 }) {
   const [draft, setDraft] = useState("");
   const text = draft.trim();
@@ -41,7 +43,7 @@ export default function CommentComposer({
       }}
       className="flex gap-2 rounded-card border border-line bg-surface p-2 focus-within:border-gold-ink"
     >
-      <Avatar name={viewerName} size="composer" />
+      <Avatar name={viewer.name} image={viewer.image} size="composer" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {replyingTo && (
           <div className="-my-1 flex items-center justify-between gap-1 text-meta text-ink-2">
