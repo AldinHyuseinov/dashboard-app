@@ -4,6 +4,17 @@ on:
   push:
   pull_request:
 
+# One run per branch or pull request: a newer push cancels the older run.
+# On main the newer run publishes instead. If its tests fail, nothing is
+# published until the next passing push, and a cancelled run's 0.1.N is skipped.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# The token can only read the repository. Publishing uses the Docker Hub secrets.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -76,3 +87,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/dashboard:0.1.${{ github.run_number }}
             ${{ secrets.DOCKERHUB_USERNAME }}/dashboard:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/dashboard:${{ github.sha }}
+          # Reuse Docker layers between runs; mode=max also caches the build stages.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
