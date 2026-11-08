@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ProfileFormState, profileUpdateSchema } from "@/lib/types";
 import { isAPIError } from "better-auth/api";
-import { redirect } from "next/navigation";
+import { AUTH_ERROR } from "@/lib/code-errors";
 
 export async function updateProfileAction(
   prevState: ProfileFormState,
@@ -22,7 +22,7 @@ export async function updateProfileAction(
   const confirmPassword = formData.get("confirmPassword") as string;
 
   const sameName = name === session.user.name;
-  const sameEmail = email === session.user.email;
+  const sameEmail = email.trim().toLowerCase() === session.user.email.toLowerCase();
 
   const validatedFields = profileUpdateSchema.safeParse({
     name: sameName ? undefined : name,
@@ -34,8 +34,6 @@ export async function updateProfileAction(
 
   if (!validatedFields.success) {
     const errors = z.flattenError(validatedFields.error).fieldErrors as ProfileFormState["errors"];
-    console.log("Profile validation errors:", errors);
-
     return { errors: errors };
   }
 
@@ -45,16 +43,6 @@ export async function updateProfileAction(
         headers: await headers(),
         body: {
           name,
-        },
-      });
-    }
-
-    if (!sameEmail) {
-      await auth.api.changeEmail({
-        headers: await headers(),
-        body: {
-          newEmail: email,
-          callbackURL: "/?verified=true",
         },
       });
     }
@@ -74,16 +62,18 @@ export async function updateProfileAction(
       if (error.message === "Invalid password") {
         return { errors: { oldPassword: ["Грешна стара парола."] } };
       }
+      if (error.body?.code === AUTH_ERROR.WEAK_PASSWORD) {
+        return { errors: { newPassword: [error.message] } };
+      }
     }
     console.log(error);
     return { errors: { form: "Възникна грешка при запазване на профила." } };
   }
 
-  if (!sameEmail) {
-    redirect("/?verify-email=true");
-  } else {
-    revalidatePath("/");
-  }
+  revalidatePath("/", "layout");
 
+  // The new address applies only once the code sent to it is entered. The
+  // form asks for that code over HTTP, where better-auth's rate limits apply.
+  if (!sameEmail) return { pendingEmail: email.trim().toLowerCase() };
   return { success: true };
 }

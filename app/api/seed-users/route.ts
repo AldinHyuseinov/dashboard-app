@@ -1,17 +1,35 @@
-import { NextResponse } from "next/server";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
-export async function GET(request: Request) {
-  // 1. Extract and verify the secret from the URL
-  const { searchParams } = new URL(request.url);
-  const secret = searchParams.get("secret");
+/** The request header that carries SEED_SECRET. */
+const SECRET_HEADER = "x-seed-secret";
 
-  if (!secret || secret !== process.env.SEED_SECRET) {
-    return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+/**
+ * Whether the request carries the configured seed secret. Refuses everyone
+ * when none is configured. Compares digests so the time taken reveals nothing.
+ */
+function hasSeedSecret(request: Request): boolean {
+  const expected = process.env.SEED_SECRET;
+  const given = request.headers.get(SECRET_HEADER);
+  if (!expected || !given) return false;
+  const digest = (text: string) => createHash("sha256").update(text).digest();
+  return timingSafeEqual(digest(given), digest(expected));
+}
+
+/**
+ * Adds the staff accounts listed in PREDETERMINED_USERS, skipping those that
+ * already exist. Only POST is exported, so Next.js answers any other method
+ * with 405, and the secret travels in a header so it never lands in a URL or
+ * a server log.
+ *
+ *   curl -X POST -H "x-seed-secret: $SEED_SECRET" https://…/api/seed-users
+ */
+export async function POST(request: Request) {
+  if (!hasSeedSecret(request)) {
+    return Response.json({ error: "Unauthorized access" }, { status: 401 });
   }
 
-  // 2. Safely parse users from the Environment Variable
+  // Safely parse users from the Environment Variable
   let usersToSeed = [];
   try {
     const rawUsers = process.env.PREDETERMINED_USERS;
@@ -20,7 +38,7 @@ export async function GET(request: Request) {
     }
     usersToSeed = JSON.parse(rawUsers);
   } catch (error) {
-    return NextResponse.json(
+    return Response.json(
       {
         error: "Configuration Error",
         details: error instanceof Error ? error.message : "Invalid JSON format",
@@ -31,12 +49,19 @@ export async function GET(request: Request) {
 
   const results = [];
 
-  // 3. Iterate and attempt signups via Better-Auth
+  const { internalAdapter } = await auth.$context;
+
   for (const user of usersToSeed) {
     try {
-      // Basic validation of the JSON object
       if (!user.email || !user.password || !user.name) {
         throw new Error(`Missing required fields for: ${user.email || "Unknown"}`);
+      }
+
+      // Checked here: better-auth answers a sign-up for a taken address as if
+      // it succeeded, so it can't be told apart from a new account.
+      if (await internalAdapter.findUserByEmail(String(user.email).toLowerCase())) {
+        results.push({ email: user.email, status: "Skipped", reason: "Already exists" });
+        continue;
       }
 
       await auth.api.signUpEmail({
@@ -51,25 +76,16 @@ export async function GET(request: Request) {
         email: user.email,
         status: "Success",
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      const isAlreadyExists =
-        error.message?.toLowerCase().includes("already exists") ||
-        error.code === "USER_ALREADY_EXISTS";
-
+    } catch (error) {
       results.push({
         email: user.email,
-        status: isAlreadyExists ? "Skipped" : "Failed",
-        reason: error.message || "Unknown error",
+        status: "Failed",
+        reason: error instanceof Error ? error.message : "Unknown error",
       });
     }
-
-    await auth.api.signOut({
-      headers: await headers(),
-    });
   }
 
-  return NextResponse.json({
+  return Response.json({
     message: "Seeding process completed",
     summary: {
       total: usersToSeed.length,

@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import { ReactNode } from "react";
 import z from "zod";
+import { passwordProblems } from "./password-rules";
 
 export const loginSchema = z.object({
   email: z.email("Невалиден имейл адрес."),
@@ -29,47 +30,8 @@ export const profileUpdateSchema = z
           path: ["oldPassword"],
         });
       }
-      if (data.newPassword.length < 8) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Паролата трябва да бъде поне 8 символа",
-          path: ["newPassword"],
-        });
-      }
-      if (data.newPassword.length > 20) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Паролата трябва да бъде по-малко от 20 символа",
-          path: ["newPassword"],
-        });
-      }
-      if (!/[A-Z]/.test(data.newPassword)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Трябва да съдържа поне една главна буква",
-          path: ["newPassword"],
-        });
-      }
-      if (!/[a-z]/.test(data.newPassword)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Трябва да съдържа поне една малка буква",
-          path: ["newPassword"],
-        });
-      }
-      if (!/[0-9]/.test(data.newPassword)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Трябва да съдържа поне едно число",
-          path: ["newPassword"],
-        });
-      }
-      if (!/[!@#$%^&*]/.test(data.newPassword)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Трябва да съдържа специален символ (!@#$%^&*)",
-          path: ["newPassword"],
-        });
+      for (const problem of passwordProblems(data.newPassword)) {
+        ctx.addIssue({ code: "custom", message: problem, path: ["newPassword"] });
       }
       if (data.newPassword !== data.confirmPassword) {
         ctx.addIssue({
@@ -157,6 +119,8 @@ export type TaskFormState = {
 };
 
 export type ProfileFormState = {
+  /** The new address a code was sent to; the change waits for that code. */
+  pendingEmail?: string;
   errors?: {
     name?: string[];
     email?: string[];

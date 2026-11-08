@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { loginAction } from "@/actions/auth-actions";
 import SubmitButton from "../SubmitButton";
@@ -10,12 +11,19 @@ export default function LoginForm() {
   const [state, formAction] = useActionState(loginAction, {});
   const searchParams = useSearchParams();
   const notAuthorized = searchParams.get("not-authorized") === "true";
+  const passwordReset = searchParams.get("password-reset") === "true";
 
   return (
     <div className="flex flex-col gap-3">
       {notAuthorized && (
         <p role="status" className="rounded-tile bg-tint p-2 text-secondary text-ink">
           Трябва да се впишете, за да продължите.
+        </p>
+      )}
+
+      {passwordReset && (
+        <p role="status" className="rounded-tile bg-tint p-2 text-secondary text-ink">
+          Паролата е сменена. Впишете се с новата парола.
         </p>
       )}
 
@@ -48,6 +56,13 @@ export default function LoginForm() {
         />
         <SubmitButton className="pt-1" pendingText="Влизане…" defaultText="Вход" />
       </form>
+
+      <Link
+        href="/forgot-password"
+        className="flex min-h-6 items-center self-start text-secondary font-semibold text-gold-ink underline-offset-2 hover:underline"
+      >
+        Забравена парола?
+      </Link>
     </div>
   );
 }
