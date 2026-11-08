@@ -323,7 +323,7 @@ export default function TaskCommentsSection({
               {replies.length > 0 && (
                 <ol
                   aria-label={`Отговори на ${authorName(topLevel)}`}
-                  className="flex flex-col gap-1 pl-6 lg:gap-2 lg:pt-1 lg:pl-[52px]"
+                  className="flex flex-col gap-1 pl-6 lg:gap-2 lg:pt-1 lg:pl-6.5"
                 >
                   {replies.map((reply) => (
                     <li key={reply.id}>{item(reply, false)}</li>

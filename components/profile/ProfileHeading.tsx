@@ -108,7 +108,7 @@ export default function ProfileHeading({
       {open && (
         <section
           aria-labelledby="picture-heading"
-          className="flex flex-col gap-2 rounded-card border border-line bg-surface p-2 lg:max-w-[600px] lg:p-3"
+          className="flex flex-col gap-2 rounded-card border border-line bg-surface p-2 lg:max-w-75 lg:p-3"
         >
           <h2 id="picture-heading" className="eyebrow text-ink-2">
             Снимка на профила
@@ -119,7 +119,7 @@ export default function ProfileHeading({
           {preview ? (
             <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center">
               {/* eslint-disable-next-line @next/next/no-img-element -- a local preview */}
-              <img src={preview} alt="Новата снимка" className="size-[128px] shrink-0 rounded-full border border-line object-cover" />
+              <img src={preview} alt="Новата снимка" className="size-16 shrink-0 rounded-full border border-line object-cover" />
               <p className="text-secondary text-ink-2">Така ще изглежда снимката ви.</p>
             </div>
           ) : (

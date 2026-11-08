@@ -29,7 +29,7 @@ export default async function EditTaskPage({
   }
 
   return (
-    <div className="flex w-full max-w-[640px] flex-col px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
+    <div className="flex w-full max-w-80 flex-col px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
       <TaskForm
         mode="edit"
         task={{

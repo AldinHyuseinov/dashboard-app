@@ -31,7 +31,7 @@ export default function TaskFiles({ files }: { files: readonly TaskFileMeta[] })
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block aspect-[4/3] overflow-hidden rounded-tile bg-tint"
+                  className="block aspect-4/3 overflow-hidden rounded-tile bg-tint"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- served from the database */}
                   <img
@@ -56,7 +56,7 @@ export default function TaskFiles({ files }: { files: readonly TaskFileMeta[] })
                   playsInline
                   preload="metadata"
                   aria-label={`Видео: ${file.fileName}`}
-                  className="block aspect-[4/3] w-full rounded-tile bg-black object-contain"
+                  className="block aspect-4/3 w-full rounded-tile bg-black object-contain"
                 />
               </li>
             );
@@ -68,7 +68,7 @@ export default function TaskFiles({ files }: { files: readonly TaskFileMeta[] })
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-7 items-center gap-2 rounded-tile border border-line bg-surface px-2 py-1 transition-colors hover:bg-hover lg:aspect-[4/3] lg:flex-col lg:items-start lg:justify-between lg:p-2"
+                className="flex min-h-7 items-center gap-2 rounded-tile border border-line bg-surface px-2 py-1 transition-colors hover:bg-hover lg:aspect-4/3 lg:flex-col lg:items-start lg:justify-between lg:p-2"
               >
                 <FileIcon size={28} className="shrink-0 text-gold-ink" />
                 <span className="flex min-w-0 flex-col">

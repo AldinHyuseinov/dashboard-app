@@ -391,7 +391,7 @@ function CategoryFieldset({
       id="category-fieldset"
       tabIndex={-1}
       aria-describedby={error ? "category-error" : undefined}
-      className="hidden min-w-0 flex-col gap-2 rounded-card border border-line bg-surface px-1 py-2 lg:flex lg:w-[300px] lg:shrink-0"
+      className="hidden min-w-0 flex-col gap-2 rounded-card border border-line bg-surface px-1 py-2 lg:flex lg:w-37.5 lg:shrink-0"
     >
       <legend className="px-1 text-secondary font-semibold">Категория</legend>
       {listCategorySections().map((section) => (
@@ -408,7 +408,7 @@ function CategoryFieldset({
                 value={c.slug}
                 checked={value === c.slug}
                 onChange={() => onChange(c.slug)}
-                className="size-[18px] shrink-0 accent-gold-ink"
+                className="size-2.25 shrink-0 accent-gold-ink"
               />
               {c.label}
             </label>
@@ -473,7 +473,7 @@ function FileTile({
           aria-valuenow={Math.round(sent * 100)}
           aria-valuemin={0}
           aria-valuemax={100}
-          className="absolute inset-x-1 bottom-1 h-0.5 overflow-hidden rounded-full bg-surface/70 lg:static lg:w-[96px] lg:bg-line"
+          className="absolute inset-x-1 bottom-1 h-0.5 overflow-hidden rounded-full bg-surface/70 lg:static lg:w-12 lg:bg-line"
         >
           <span className="block h-full rounded-full bg-gold transition-[width]" style={{ width: `${sent * 100}%` }} />
         </span>
@@ -484,10 +484,10 @@ function FileTile({
         onClick={onRemove}
         disabled={disabled}
         aria-label={`Премахни ${name}`}
-        className="absolute top-0 right-0 flex size-touch cursor-pointer items-start justify-end p-[6px] disabled:cursor-not-allowed disabled:opacity-50 lg:static lg:items-center lg:justify-center lg:rounded-tile lg:p-0 lg:text-ink-2 lg:hover:bg-hover lg:hover:text-ink"
+        className="absolute top-0 right-0 flex size-touch cursor-pointer items-start justify-end p-0.75 disabled:cursor-not-allowed disabled:opacity-50 lg:static lg:items-center lg:justify-center lg:rounded-tile lg:p-0 lg:text-ink-2 lg:hover:bg-hover lg:hover:text-ink"
       >
         <span className="flex size-3 items-center justify-center rounded-full bg-ink/75 text-surface lg:size-auto lg:bg-transparent lg:text-current">
-          <CloseIcon size={14} className="lg:size-[18px]" />
+          <CloseIcon size={14} className="lg:size-2.25" />
         </span>
       </button>
     </li>
@@ -500,7 +500,7 @@ function Published({ title, href, categoryLabel }: { title: string; href: string
   useEffect(() => headingRef.current?.focus(), []);
 
   return (
-    <div className="flex max-w-[560px] flex-col gap-3 pt-3 lg:pt-6">
+    <div className="flex max-w-70 flex-col gap-3 pt-3 lg:pt-6">
       <span className="flex size-8 items-center justify-center rounded-full bg-vine-tint text-vine">
         <CheckIcon size={32} />
       </span>

@@ -55,7 +55,7 @@ function Rows({
               {count !== undefined && (
                 <span
                   aria-hidden="true"
-                  className={`inline-flex h-3 min-w-[28px] shrink-0 items-center justify-center rounded-full px-1 text-label ${
+                  className={`inline-flex h-3 min-w-3.5 shrink-0 items-center justify-center rounded-full px-1 text-label ${
                     count === 0 ? "font-medium text-ink-2" : "bg-tint font-bold text-gold-ink"
                   }`}
                 >

@@ -18,7 +18,7 @@ export default function PickButton({
   onPick: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <label className="flex min-h-[72px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-tile border border-line bg-surface text-meta font-semibold transition-colors focus-within:outline-2 focus-within:outline-gold-ink hover:bg-hover has-disabled:cursor-not-allowed has-disabled:opacity-60">
+    <label className="flex min-h-9 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-tile border border-line bg-surface text-meta font-semibold transition-colors focus-within:outline-2 focus-within:outline-gold-ink hover:bg-hover has-disabled:cursor-not-allowed has-disabled:opacity-60">
       <input
         type="file"
         accept={accept}

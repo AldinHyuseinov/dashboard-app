@@ -18,7 +18,7 @@ export default async function CategoriesPage() {
   const notDoneCounts = await tasks.notDoneCounts(actor);
 
   return (
-    <div className="flex w-full max-w-[640px] flex-col gap-3 px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
+    <div className="flex w-full max-w-80 flex-col gap-3 px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
       <div className="flex flex-col gap-0.5">
         <h1 className="screen-title">Категории</h1>
         <p className="text-meta text-ink-2">Числото показва неготовите задачи.</p>

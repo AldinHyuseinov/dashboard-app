@@ -83,7 +83,7 @@ export default function CommentMenu({
       {open && (
         <div
           id={menuId}
-          className="absolute top-full right-0 z-20 flex w-[248px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-card border border-line bg-surface py-0.5 shadow-lg"
+          className="absolute top-full right-0 z-20 flex w-31 max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-card border border-line bg-surface py-0.5 shadow-lg"
         >
           {confirmingDelete ? (
             <div role="alert" className="flex flex-col gap-1 p-2">

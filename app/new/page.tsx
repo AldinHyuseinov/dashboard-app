@@ -19,7 +19,7 @@ export default async function NewTaskPage() {
   }
 
   return (
-    <div className="flex w-full max-w-[1040px] flex-col gap-3 px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
+    <div className="flex w-full max-w-130 flex-col gap-3 px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
       <div className="flex flex-col gap-3 lg:hidden">
         <div className="flex flex-col gap-0.5">
           <p className="eyebrow text-ink-2">Стъпка 1 от 2</p>

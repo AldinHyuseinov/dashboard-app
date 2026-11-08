@@ -44,7 +44,7 @@ export default function ThemeSwitch({ theme }: { theme: Theme }) {
           return (
             <label
               key={id}
-              className="flex min-h-7 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[8px] px-0.5 text-label font-semibold text-ink-2 transition-colors hover:text-ink has-checked:bg-tint has-checked:text-gold-ink has-focus-visible:outline-2 has-focus-visible:outline-gold-ink"
+              className="flex min-h-7 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 text-label font-semibold text-ink-2 transition-colors hover:text-ink has-checked:bg-tint has-checked:text-gold-ink has-focus-visible:outline-2 has-focus-visible:outline-gold-ink"
             >
               <input
                 type="radio"

@@ -19,7 +19,7 @@ export default async function CreateTaskPage({
   }
 
   return (
-    <div className="flex w-full max-w-[1040px] flex-col px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
+    <div className="flex w-full max-w-130 flex-col px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
       <NewTaskScreen category={category} secondStep={false} cancelHref={`/category/${category}`} />
     </div>
   );

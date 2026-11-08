@@ -31,7 +31,11 @@ export function createAuth({ emailAdapter }: AuthDeps) {
     // staff don't use: they sign in with their password (sending sign-in codes
     // is refused below too). The other path is the plugin's deprecated twin
     // of request-password-reset.
-    disabledPaths: ["/sign-in/email-otp", "/forget-password/email-otp"],
+    //
+    // Staff are added only through the seed route, which calls
+    // auth.api.signUpEmail on the server. disabledPaths blocks only HTTP
+    // requests, so that keeps working while the public sign-up answers 404.
+    disabledPaths: ["/sign-in/email-otp", "/forget-password/email-otp", "/sign-up/email"],
 
     database: prismaAdapter(prisma, {
       provider: "sqlserver",

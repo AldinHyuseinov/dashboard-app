@@ -12,7 +12,7 @@ export default async function NotFound() {
   const actor = await getActor();
 
   const content = (
-    <div className="flex w-full max-w-[560px] flex-col items-start gap-3 px-2 pt-4 pb-8 lg:px-6">
+    <div className="flex w-full max-w-70 flex-col items-start gap-3 px-2 pt-4 pb-8 lg:px-6">
       <div className="flex flex-col gap-0.5">
         <p className="eyebrow text-gold-ink">Грешка 404</p>
         <h1 className="screen-title">Страницата не е намерена</h1>

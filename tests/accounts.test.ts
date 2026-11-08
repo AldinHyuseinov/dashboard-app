@@ -156,6 +156,19 @@ describe("Accounts", () => {
 
       expect(added.token).toBeNull();
     });
+
+    it("is closed to sign-ups from outside: only the seed route adds staff", async () => {
+      const response = await auth.handler(
+        new Request("http://localhost:3000/api/auth/sign-up/email", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name: "Stranger", email: "stranger@example.test", password: PASSWORD }),
+        }),
+      );
+
+      expect(response.status).toBe(404);
+      expect(await canSignIn("stranger@example.test", PASSWORD)).toBe(false);
+    });
   });
 
   describe("Signing in", () => {

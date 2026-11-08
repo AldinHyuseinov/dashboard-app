@@ -4,11 +4,11 @@ const SIZES = {
   /** The sidebar's profile chip, nudged left to line up with the icons above it. */
   chip: "-ml-0.5 size-3.5 text-[11px]",
   /** Replies and small detail rows. */
-  sm: "size-[28px] text-[11px]",
+  sm: "size-3.5 text-[11px]",
   /** Comments: 32px on phones, 36px on desktop. */
-  md: "size-4 text-label lg:size-[36px]",
+  md: "size-4 text-label lg:size-4.5",
   /** The comment box, desktop only. */
-  composer: "hidden size-[36px] text-label lg:flex",
+  composer: "hidden size-4.5 text-label lg:flex",
   /** Feed items. */
   feed: "size-5 text-secondary",
   /** The Profile's heading. */

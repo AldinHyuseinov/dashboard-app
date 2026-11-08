@@ -57,7 +57,7 @@ export default async function TaskDetailPage({
   );
 
   return (
-    <div className="flex w-full max-w-[1040px] flex-col gap-3 px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
+    <div className="flex w-full max-w-130 flex-col gap-3 px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
       <MarkTaskOpened taskId={task.id} shownAt={shownAt} />
       <Suspense fallback={null}>
         <Alert />
@@ -110,7 +110,7 @@ export default async function TaskDetailPage({
         </aside>
 
         <div className="flex min-w-0 flex-col gap-3 lg:col-start-1 lg:row-start-2 lg:gap-4">
-          <p className="max-w-[680px] text-body whitespace-pre-wrap wrap-break-word">{task.description}</p>
+          <p className="max-w-85 text-body whitespace-pre-wrap wrap-break-word">{task.description}</p>
           <TaskFiles files={task.files} />
           <TaskCommentsSection
             taskId={task.id}

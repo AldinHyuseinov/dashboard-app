@@ -15,7 +15,7 @@ export default function ListSkeleton({
   withAvatars?: boolean;
 }) {
   return (
-    <div className="flex w-full max-w-[720px] flex-col gap-3 px-2 pt-3 pb-4 lg:gap-4 lg:px-6 lg:pt-1">
+    <div className="flex w-full max-w-90 flex-col gap-3 px-2 pt-3 pb-4 lg:gap-4 lg:px-6 lg:pt-1">
       <div className="flex flex-col gap-0.5">
         {title ? (
           <h1 className="screen-title">{title}</h1>

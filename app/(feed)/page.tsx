@@ -37,7 +37,7 @@ export default async function Home() {
 
   // Phones: the title, the cards, then the Feed. Desktop: the cards in a column on the right.
   return (
-    <div className="flex w-full max-w-[720px] flex-col gap-3 px-2 pt-3 pb-4 lg:grid lg:max-w-[1040px] lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start lg:gap-x-6 lg:gap-y-4 lg:px-6 lg:pt-1">
+    <div className="flex w-full max-w-90 flex-col gap-3 px-2 pt-3 pb-4 lg:grid lg:max-w-130 lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start lg:gap-x-6 lg:gap-y-4 lg:px-6 lg:pt-1">
       <div className="flex flex-col gap-3 lg:col-start-1 lg:row-start-1 lg:gap-4">
         <Suspense fallback={null}>
           <Alert />

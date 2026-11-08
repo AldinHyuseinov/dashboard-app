@@ -26,7 +26,7 @@ export default function BottomBar() {
       aria-label="Основна навигация"
       className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pt-1 lg:hidden"
     >
-      <ul className="mx-auto grid max-w-[640px] grid-cols-4 pl-[max(8px,env(safe-area-inset-left))] pr-[max(8px,env(safe-area-inset-right))]">
+      <ul className="mx-auto grid max-w-80 grid-cols-4 pl-[max(8px,env(safe-area-inset-left))] pr-[max(8px,env(safe-area-inset-right))]">
         {NAV_ITEMS.map((item) => {
           const isCurrent = item.id === navItem;
           return (

@@ -19,7 +19,7 @@ export default async function NewTaskInCategoryPage({
   }
 
   return (
-    <div className="flex w-full max-w-[1040px] flex-col px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
+    <div className="flex w-full max-w-130 flex-col px-2 pt-3 pb-4 lg:px-6 lg:pt-1">
       <NewTaskScreen category={category} secondStep cancelHref="/new" />
     </div>
   );

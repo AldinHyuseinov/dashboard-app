@@ -36,7 +36,7 @@ export default async function Profile() {
   const theme = await deviceTheme();
 
   return (
-    <div className="flex w-full max-w-[1040px] flex-col gap-3 px-2 pt-3 pb-4 lg:gap-4 lg:px-6 lg:pt-1">
+    <div className="flex w-full max-w-130 flex-col gap-3 px-2 pt-3 pb-4 lg:gap-4 lg:px-6 lg:pt-1">
       <div className="flex flex-col gap-1">
         <h1 className="screen-title">Профил</h1>
         <ProfileHeading name={user.name} email={user.email} image={user.image ?? null} />
