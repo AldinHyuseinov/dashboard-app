@@ -1,4 +1,5 @@
 import type { RangeRequest, ReadResult } from "@/lib/files";
+import type { ReadResult as PictureReadResult } from "@/lib/profile-pictures";
 
 /**
  * The single byte range a `Range` header asks for, such as `bytes=0-1`,
@@ -55,4 +56,27 @@ export function fileResponse(result: ReadResult): Response {
   headers.set("Content-Length", String(range.end - range.start + 1));
   headers.set("Content-Range", `bytes ${range.start}-${range.end}/${file.size}`);
   return new Response(body, { status: 206, headers });
+}
+
+/**
+ * The HTTP answer to a Profile picture request: the WebP picture, 401
+ * without a session, or 404 when the user has none. A picture's address
+ * changes whenever a new one is set, so browsers may keep it for a year;
+ * only the browser, never a shared cache, since it is for signed-in people.
+ */
+export function pictureResponse(result: PictureReadResult): Response {
+  if (!result.ok) {
+    const [status, text] =
+      result.reason === "unauthenticated" ? [401, "Unauthorized"] : [404, "Picture not found"];
+    return new Response(text, { status, headers: { "Cache-Control": "no-store" } });
+  }
+
+  return new Response(new Uint8Array(result.picture), {
+    status: 200,
+    headers: {
+      "Content-Type": "image/webp",
+      "Content-Length": String(result.picture.length),
+      "Cache-Control": "private, max-age=31536000, immutable",
+    },
+  });
 }

@@ -26,6 +26,7 @@ import {
   UploadIcon,
 } from "@/components/shell/icons";
 import { taskHref } from "@/lib/navigation";
+import PickButton from "@/components/forms/PickButton";
 import { uploadFile, videoDuration } from "./browser-files";
 
 type Props =
@@ -280,7 +281,7 @@ export default function TaskForm(props: Props) {
               <>
                 {/* Phones: the camera, the photo library, or documents. */}
                 <div className="grid grid-cols-3 gap-1 lg:hidden">
-                  <PickButton icon={<CameraIcon size={24} />} label="Камера" accept={MEDIA_ACCEPT} capture onPick={onPick} disabled={busy} />
+                  <PickButton icon={<CameraIcon size={24} />} label="Камера" accept={MEDIA_ACCEPT} capture="environment" onPick={onPick} disabled={busy} />
                   <PickButton icon={<GalleryIcon size={24} />} label="Галерия" accept={MEDIA_ACCEPT} multiple onPick={onPick} disabled={busy} />
                   <PickButton icon={<FileIcon size={24} />} label="Документ" accept={DOCUMENT_ACCEPT} multiple onPick={onPick} disabled={busy} />
                 </div>
@@ -420,41 +421,6 @@ function CategoryFieldset({
         </p>
       )}
     </fieldset>
-  );
-}
-
-/** A tile that opens a file picker: the input inside it is what's focused and announced. */
-function PickButton({
-  icon,
-  label,
-  accept,
-  capture,
-  multiple,
-  disabled,
-  onPick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  accept: string;
-  capture?: boolean;
-  multiple?: boolean;
-  disabled: boolean;
-  onPick: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
-  return (
-    <label className="flex min-h-[72px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-tile border border-line bg-surface text-meta font-semibold transition-colors focus-within:outline-2 focus-within:outline-gold-ink hover:bg-hover has-disabled:cursor-not-allowed has-disabled:opacity-60">
-      <input
-        type="file"
-        accept={accept}
-        capture={capture ? "environment" : undefined}
-        multiple={multiple}
-        disabled={disabled}
-        onChange={onPick}
-        className="sr-only"
-      />
-      <span className="text-gold-ink">{icon}</span>
-      {label}
-    </label>
   );
 }
 

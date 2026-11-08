@@ -235,6 +235,46 @@ describe("Accounts", () => {
     });
   });
 
+  describe("Profile pictures", () => {
+    it("can't be given an address through the account API, only set in the Profile", async () => {
+      const ivan = await addStaff("Ivan");
+      const laptop = await signIn(ivan, PASSWORD);
+
+      await expect(
+        auth.api.updateUser({ headers: laptop, body: { image: "https://tracker.example/pixel.png" } }),
+      ).rejects.toThrow();
+      await expect(
+        auth.api.updateUser({ headers: laptop, body: { name: "Иван", image: null } }),
+      ).rejects.toThrow();
+
+      const { user } = (await auth.api.getSession({
+        headers: laptop,
+        query: { disableCookieCache: true },
+      }))!;
+      expect(user).toMatchObject({ name: "Ivan", image: null });
+    });
+
+    it("can't be given an address when an account is added", async () => {
+      await expect(
+        auth.api.signUpEmail({
+          body: { name: "Ivan", email: "ivan@avexim.test", password: PASSWORD, image: "https://tracker.example/pixel.png" },
+        }),
+      ).rejects.toThrow();
+
+      expect(await canSignIn("ivan@avexim.test", PASSWORD)).toBe(false);
+    });
+
+    it("leave changing the name through the account API alone", async () => {
+      const ivan = await addStaff("Ivan");
+      const laptop = await signIn(ivan, PASSWORD);
+
+      await auth.api.updateUser({ headers: laptop, body: { name: "Иван Петров" } });
+
+      const session = await auth.api.getSession({ headers: laptop, query: { disableCookieCache: true } });
+      expect(session?.user.name).toBe("Иван Петров");
+    });
+  });
+
   describe("Changing the email in the Profile", () => {
     async function emailOf(device: Headers) {
       return (await auth.api.getSession({ headers: device }))?.user.email;

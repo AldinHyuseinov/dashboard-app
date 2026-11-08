@@ -11,14 +11,32 @@ const SIZES = {
   lg: "size-7 text-body",
 } as const;
 
-/** A person's initials in a tinted circle. Decorative: their name is always written beside it. */
-export default function Avatar({ name, size }: { name: string; size: keyof typeof SIZES }) {
+/**
+ * A person in a circle: their Profile picture when they have one, their
+ * initials on a tint otherwise. Decorative: their name is always written
+ * beside it.
+ */
+export default function Avatar({
+  name,
+  image,
+  size,
+}: {
+  name: string;
+  /** The address of their Profile picture, or nothing without one. */
+  image?: string | null;
+  size: keyof typeof SIZES;
+}) {
   return (
     <span
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-full bg-tint font-semibold text-gold-ink ${SIZES[size]}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-tint font-semibold text-gold-ink ${SIZES[size]}`}
     >
-      {initials(name)}
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element -- served from the database to signed-in people only
+        <img src={image} alt="" className="size-full object-cover" />
+      ) : (
+        initials(name)
+      )}
     </span>
   );
 }

@@ -17,6 +17,8 @@ model User {
   name          String
   email         String
   emailVerified Boolean    @default(false)
+  /// The address of the user's Profile picture, versioned by when it was set,
+  /// or null without one. Only the Profile pictures module writes it.
   image         String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
@@ -29,6 +31,7 @@ model User {
   activities    Activity[]
   taskOpenings  TaskOpening[]
   pushDevices   PushDevice[]
+  profilePicture ProfilePicture?
 
   /// When the user last opened the Activity Feed: what others did up to then
   /// is no longer Unread for them. Null until they first open it.
@@ -104,6 +107,16 @@ model TaskFile {
   createdAt DateTime @default(now())
 
   @@index([taskId, createdAt])
+}
+
+/// A user's Profile picture: a 256×256 WebP square, stored in SQL Server like
+/// Task files (ADR-0002). Kept apart from the user record so user queries
+/// never load the bytes.
+model ProfilePicture {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data   Bytes
+  setAt  DateTime
 }
 
 model Comment {

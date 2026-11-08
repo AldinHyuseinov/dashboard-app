@@ -66,6 +66,11 @@ export function createAuth({ emailAdapter }: AuthDeps) {
         if (ctx.path === "/email-otp/reset-password") {
           refuseWeakPassword(ctx.body?.password);
         }
+        // A Profile picture's address is written only by the Profile pictures
+        // module. Through here, anyone could point theirs at any URL.
+        if ((ctx.path === "/update-user" || ctx.path === "/sign-up/email") && ctx.body && "image" in ctx.body) {
+          throw new APIError("BAD_REQUEST", { message: "Снимката на профила се сменя от профила." });
+        }
         if (ctx.path === "/change-password") {
           refuseWeakPassword(ctx.body?.newPassword);
           // better-auth's own revoking ends every session, this device's too,

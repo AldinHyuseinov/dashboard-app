@@ -2,8 +2,8 @@ import DetailsForm from "@/components/profile/DetailsForm";
 import PasswordForm from "@/components/profile/PasswordForm";
 import PushSwitch from "@/components/profile/PushSwitch";
 import SignOutButton from "@/components/profile/SignOutButton";
+import ProfileHeading from "@/components/profile/ProfileHeading";
 import ThemeSwitch from "@/components/profile/ThemeSwitch";
-import Avatar from "@/components/shell/Avatar";
 import { auth } from "@/lib/auth";
 import { deviceTheme } from "@/lib/device-theme";
 import { notifications } from "@/lib/notifications";
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * The Profile: name and email, password, this device's notifications and
+ * The Profile: the person's picture, name and email, password, this device's notifications and
  * appearance, and signing out. One column on phones; on desktop the
  * account forms sit beside the device settings.
  */
@@ -39,13 +39,7 @@ export default async function Profile() {
     <div className="flex w-full max-w-[1040px] flex-col gap-3 px-2 pt-3 pb-4 lg:gap-4 lg:px-6 lg:pt-1">
       <div className="flex flex-col gap-1">
         <h1 className="screen-title">Профил</h1>
-        <div className="flex items-center gap-2">
-          <Avatar name={user.name} size="lg" />
-          <div className="flex min-w-0 flex-col">
-            <p className="truncate text-body font-semibold text-ink">{user.name}</p>
-            <p className="truncate text-secondary text-ink-2">{user.email}</p>
-          </div>
-        </div>
+        <ProfileHeading name={user.name} email={user.email} image={user.image ?? null} />
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] lg:items-start lg:gap-4">
