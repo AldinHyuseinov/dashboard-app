@@ -1,0 +1,143 @@
+<!doctype html>
+<!--
+  The "No connection" screen. The service worker (public/sw.js) shows it in
+  place of any screen that can't be reached, at that screen's address, so
+  trying again reloads the screen that was asked for. It must work on its
+  own: styles inline, and only the images listed in OFFLINE_FILES in sw.js.
+  After changing it, bump OFFLINE_CACHE there. Colours: app/globals.css.
+-->
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#cda349" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e1912" media="(prefers-color-scheme: dark)">
+<title>AVEXIM | Няма връзка</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f2ef;
+    --surface: #ffffff;
+    --ink: #2b2216;
+    --ink-2: #6b5d45;
+    --line: #e4ded1;
+    --gold: #cda349;
+    --gold-ink: #8a6a1f;
+    --on-gold: #2b2216;
+    --bar: #cda349;
+    --bar-line: #b8913c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14110c;
+      --surface: #1e1912;
+      --ink: #f2ecdf;
+      --ink-2: #bcaf97;
+      --line: #352c20;
+      --gold: #d4ae55;
+      --gold-ink: #e2c27a;
+      --on-gold: #1b160f;
+      --bar: #1e1912;
+      --bar-line: #352c20;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Montserrat, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    min-height: calc(56px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+    background: var(--bar);
+    border-bottom: 1px solid var(--bar-line);
+  }
+  header img { display: block; height: 28px; width: auto; }
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px max(16px, env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    max-width: 440px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+  svg { color: var(--gold-ink); }
+  h1 {
+    margin: 0;
+    font-family: Unbounded, Montserrat, system-ui, sans-serif;
+    font-weight: 300;
+    font-size: 27.65px;
+    letter-spacing: -1px;
+    line-height: 1.3;
+  }
+  p { margin: 0; font-size: 14px; color: var(--ink-2); }
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--gold);
+    color: var(--on-gold);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 2px solid var(--gold-ink); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<header>
+  <img src="/company-logo.png" alt="AVEXIM" width="137" height="28">
+</header>
+<main>
+  <section aria-labelledby="title">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M2 2l20 20"></path>
+      <path d="M8.5 16.5a5 5 0 0 1 7 0"></path>
+      <path d="M2 8.82a15 15 0 0 1 4.17-2.65"></path>
+      <path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"></path>
+      <path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"></path>
+      <path d="M5 13a10 10 0 0 1 5.24-2.76"></path>
+      <path d="M12 20h.01"></path>
+    </svg>
+    <h1 id="title">Няма връзка</h1>
+    <p>Устройството не е свързано с интернет. Проверете Wi-Fi или мобилните данни. Екранът ще се отвори сам, щом връзката се върне.</p>
+    <button type="button" id="retry">Опитайте отново</button>
+  </section>
+</main>
+<script>
+  document.getElementById("retry").addEventListener("click", function () {
+    location.reload();
+  });
+  window.addEventListener("online", function () {
+    location.reload();
+  });
+</script>
+</body>
+</html>

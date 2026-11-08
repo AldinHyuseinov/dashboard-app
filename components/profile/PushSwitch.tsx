@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { browserSupportsPush, currentSubscription, turnOffPush, turnOnPush } from "@/lib/push-browser";
-
-type PushState = "checking" | "unsupported" | "blocked" | "off" | "on";
+import { useState } from "react";
+import type { PushState } from "@/lib/app-prompts";
+import { turnOffPush, turnOnPush, usePushState } from "@/lib/push-browser";
 
 /** What each state means for the person, and what they can do about it. */
 const HINTS: Record<PushState, string> = {
@@ -31,27 +30,9 @@ export default function PushSwitch({
   vapidPublicKey: string | null;
   sessionEndpoints: string[];
 }) {
-  const [state, setState] = useState<PushState>("checking");
+  const [state, setState] = usePushState(vapidPublicKey, sessionEndpoints);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const check = async (): Promise<PushState> => {
-      if (!vapidPublicKey || !browserSupportsPush()) return "unsupported";
-      if (Notification.permission === "denied") return "blocked";
-      if (Notification.permission !== "granted") return "off";
-      const subscription = await currentSubscription();
-      return subscription && sessionEndpoints.includes(subscription.endpoint) ? "on" : "off";
-    };
-    check().then(
-      (checked) => !cancelled && setState(checked),
-      () => !cancelled && setState("off"),
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [vapidPublicKey, sessionEndpoints]);
 
   const toggle = async () => {
     if (!vapidPublicKey) return;

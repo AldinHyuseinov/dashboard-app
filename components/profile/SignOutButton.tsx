@@ -2,15 +2,15 @@
 
 import { useFormStatus } from "react-dom";
 import { signOutAction } from "@/actions/auth-actions";
-import { forgetPushSubscription } from "@/lib/push-browser";
+import { forgetPushSubscription, showUnreadOnIcon } from "@/lib/push-browser";
 import { SignOutIcon } from "@/components/shell/icons";
 
-/** Signs out of this device, which also stops its notifications. */
+/** Signs out of this device, which also stops its notifications and clears the app icon's badge. */
 export default function SignOutButton() {
   return (
     <form
       action={async () => {
-        await forgetPushSubscription();
+        await Promise.all([forgetPushSubscription(), showUnreadOnIcon(0)]);
         await signOutAction();
       }}
       className="flex flex-col gap-1"

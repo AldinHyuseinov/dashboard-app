@@ -6,6 +6,7 @@ import { createNotifications, type Notifications } from "@/lib/notifications";
 import { createTasks } from "@/lib/tasks";
 import { createComments } from "@/lib/comments";
 import type { Actor } from "@/lib/actor";
+import { activity } from "@/lib/activity";
 import { createSession, createUser } from "./support/fixtures";
 import { sessionFrom } from "./support/auth";
 
@@ -110,6 +111,7 @@ describe("Push notifications", () => {
             body: "Нова винена листа\nЩе го направя днес",
             url: `/tasks/${task.id}`,
           },
+          unread: 1,
         },
       ]);
     });
@@ -248,6 +250,41 @@ describe("Push notifications", () => {
         { title: "Maria редактира задача", body: "Инвентаризация на склада", url: `/tasks/${created.task.id}` },
         { title: "Maria изтри задача", body: "Инвентаризация на склада", url: "/" },
       ]);
+    });
+  });
+
+  describe("the badge on the app's icon", () => {
+    it("each push carries the person's Unread count, so the icon can show it", async () => {
+      const ivan = await createUser("Ivan");
+      const maria = await createUser("Maria");
+      const georgi = await createUser("Georgi");
+      await turnOnPush(ivan, "ivans-phone");
+      await turnOnPush(georgi, "georgis-phone");
+      const task = await postTask(ivan);
+      await post(maria, task.id, "Първи");
+
+      // Georgi has seen the Feed since; Ivan hasn't.
+      await activity.markFeedSeen(georgi, { now: MONDAY_10AM });
+      await comments.post(maria, { taskId: task.id, text: "Втори", now: MONDAY_11AM });
+
+      const unreadOf = (endpointEnd: string) =>
+        pushes.sent.find((push) => push.to.endpoint.endsWith(endpointEnd))?.unread;
+      // Ivan: both of Maria's Comments. His own Task isn't news to him.
+      expect(unreadOf("ivans-phone")).toBe(2);
+      // Georgi: Ivan's Task and Maria's first Comment were seen; the second is new.
+      expect(unreadOf("georgis-phone")).toBe(1);
+    });
+
+    it("a Reaction isn't an Activity, so it pushes the count as it was", async () => {
+      const ivan = await createUser("Ivan");
+      const maria = await createUser("Maria");
+      await turnOnPush(ivan, "ivans-phone");
+      const task = await postTask(ivan);
+      const ivansComment = await post(ivan, task.id, "Готово е");
+
+      await comments.react(maria, { commentId: ivansComment.id, emoji: "👍" });
+
+      expect(pushes.sent.map((push) => push.unread)).toEqual([0]);
     });
   });
 

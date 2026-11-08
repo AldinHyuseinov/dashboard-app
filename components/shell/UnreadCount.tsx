@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import { markFeedSeenAction, markTaskOpenedAction } from "@/actions/activity-actions";
+import { showUnreadOnIcon } from "@/lib/push-browser";
 
 type UnreadCountState = { count: number; refresh: () => Promise<void> };
 
@@ -20,6 +21,9 @@ const UnreadCountContext = createContext<UnreadCountState>({ count: 0, refresh: 
  * Holds the navigation's Unread count. The shell's layout stays in place as
  * people move between screens, so the count it rendered goes stale: it is
  * fetched again on every screen change and after a screen marks things read.
+ * The installed app's icon shows the same count, from opening the app or
+ * bringing it back to the screen on (pushes update it in between, see
+ * public/sw.js).
  */
 export function UnreadCountProvider({
   initialCount,
@@ -47,6 +51,19 @@ export function UnreadCountProvider({
     const { count: fresh }: { count: number } = await response.json();
     if (request === latestRequest.current) setCount(fresh);
   }, []);
+
+  useEffect(() => {
+    void showUnreadOnIcon(count);
+  }, [count]);
+
+  // An installed app brought back to the screen isn't loaded again: count afresh.
+  useEffect(() => {
+    const onShow = () => {
+      if (document.visibilityState === "visible") refresh().catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, [refresh]);
 
   const pathname = usePathname();
   const shownPathname = useRef(pathname);

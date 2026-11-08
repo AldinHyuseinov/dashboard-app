@@ -1,10 +1,12 @@
 /**
- * Push in the browser: whether it can receive push, and turning
- * notifications on and off for this device. Client-side only. The Profile
- * switch uses it now, and the Feed's notifications card later.
+ * Push in the browser: the service worker, whether this device gets push,
+ * turning notifications on and off for it, and the badge on the app's icon.
+ * Client-side only. Used by the Profile switch and the Feed's card.
  */
 
+import { useEffect, useState } from "react";
 import { turnOffPushAction, turnOnPushAction } from "@/actions/push-actions";
+import type { PushState } from "@/lib/app-prompts";
 import type { PushTarget } from "@/lib/push-adapter";
 
 /** Whether this browser can receive push at all. */
@@ -12,9 +14,18 @@ export function browserSupportsPush(): boolean {
   return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }
 
-/** Registers the service worker, which shows the notifications pushes bring. */
-async function serviceWorker(): Promise<ServiceWorkerRegistration> {
+/**
+ * Registers the service worker, which shows the notifications pushes bring
+ * and the No connection screen. Every screen does it on loading, so it's in
+ * place before the connection drops.
+ */
+export async function registerServiceWorker(): Promise<void> {
+  if (!("serviceWorker" in navigator)) return;
   await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
+}
+
+async function serviceWorker(): Promise<ServiceWorkerRegistration> {
+  await registerServiceWorker();
   return navigator.serviceWorker.ready;
 }
 
@@ -22,6 +33,41 @@ async function serviceWorker(): Promise<ServiceWorkerRegistration> {
 export async function currentSubscription(): Promise<PushSubscription | null> {
   const registration = await navigator.serviceWorker.getRegistration("/");
   return (await registration?.pushManager.getSubscription()) ?? null;
+}
+
+/**
+ * Whether this device gets push. On only when the browser has a subscription
+ * the server has on for this session (`sessionEndpoints`); `vapidPublicKey`
+ * is null when push isn't set up on the server.
+ */
+export async function checkPushState(
+  vapidPublicKey: string | null,
+  sessionEndpoints: string[],
+): Promise<Exclude<PushState, "checking">> {
+  if (!vapidPublicKey || !browserSupportsPush()) return "unsupported";
+  if (Notification.permission === "denied") return "blocked";
+  if (Notification.permission !== "granted") return "off";
+  const subscription = await currentSubscription();
+  return subscription && sessionEndpoints.includes(subscription.endpoint) ? "on" : "off";
+}
+
+/**
+ * Whether this device gets push, checked once the screen is in the browser
+ * ("checking" until then), and a way to say it changed.
+ */
+export function usePushState(vapidPublicKey: string | null, sessionEndpoints: string[]) {
+  const [state, setState] = useState<PushState>("checking");
+  useEffect(() => {
+    let cancelled = false;
+    checkPushState(vapidPublicKey, sessionEndpoints).then(
+      (checked) => !cancelled && setState(checked),
+      () => !cancelled && setState("off"),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [vapidPublicKey, sessionEndpoints]);
+  return [state, setState] as const;
 }
 
 /** The outcome of turning notifications on. */
@@ -87,5 +133,20 @@ export async function forgetPushSubscription(): Promise<void> {
     await (await currentSubscription())?.unsubscribe();
   } catch {
     // Nothing more to do: the server no longer pushes to it.
+  }
+}
+
+/**
+ * The Unread count on the app's icon, cleared at none. Only an installed app
+ * has an icon to badge; elsewhere, or where badges aren't supported, nothing
+ * happens. Never fails.
+ */
+export async function showUnreadOnIcon(count: number): Promise<void> {
+  try {
+    if (!("setAppBadge" in navigator)) return;
+    if (count > 0) await navigator.setAppBadge(count);
+    else await navigator.clearAppBadge();
+  } catch {
+    // Badges turned off for the app: nothing to show it on.
   }
 }

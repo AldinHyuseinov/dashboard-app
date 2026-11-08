@@ -1,7 +1,7 @@
 import z from "zod";
 import { prisma } from "@/lib/prisma";
 import type { Actor } from "@/lib/actor";
-import { excerpt } from "@/lib/activity";
+import { activity, excerpt } from "@/lib/activity";
 import { categoryLabelOrSlug } from "@/lib/categories";
 import { emailAdapter as defaultEmailAdapter } from "@/lib/email";
 import type { EmailAdapter, EmailMessage } from "@/lib/email-adapter";
@@ -59,6 +59,9 @@ function recipientsFor(action: NotifiedAction): Recipients {
   }
 }
 
+/** A Push device, with its owner's Unread count for the badge on the app's icon. */
+type CountedPushDevice = { to: PushTarget; unread: number };
+
 /**
  * How the recipients except the Actor are reached, each once: every push
  * device of those who have any, and the email addresses of those who don't.
@@ -66,17 +69,27 @@ function recipientsFor(action: NotifiedAction): Recipients {
 async function channelsFor(
   actor: Actor,
   recipients: Recipients,
-): Promise<{ emails: string[]; devices: PushTarget[] }> {
+): Promise<{ emails: string[]; devices: CountedPushDevice[] }> {
   const users = await prisma.user.findMany({
     where: {
       id: recipients === "everyone" ? { not: actor.id } : { in: recipients, not: actor.id },
     },
-    select: { email: true, pushDevices: { select: { endpoint: true, p256dh: true, auth: true } } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      pushDevices: { select: { endpoint: true, p256dh: true, auth: true } },
+    },
   });
+  const pushed = users.filter((user) => user.pushDevices.length > 0);
+  const unreadCounts = await Promise.all(pushed.map((user) => activity.unreadCount(user)));
   return {
     emails: users.filter((user) => user.pushDevices.length === 0).map((user) => user.email),
-    devices: users.flatMap((user) =>
-      user.pushDevices.map(({ endpoint, p256dh, auth }) => ({ endpoint, keys: { p256dh, auth } })),
+    devices: pushed.flatMap((user, i) =>
+      user.pushDevices.map(({ endpoint, p256dh, auth }) => ({
+        to: { endpoint, keys: { p256dh, auth } },
+        unread: unreadCounts[i],
+      })),
     ),
   };
 }
@@ -241,7 +254,7 @@ export function createNotifications({ emailAdapter, pushAdapter }: NotificationD
     const notification = pushFor(actor, action);
     await Promise.all([
       emails.length > 0 && sendEmail(action, { to: emails, ...emailFor(actor, action) }),
-      ...devices.map((to) => push(action, { to, notification })),
+      ...devices.map(({ to, unread }) => push(action, { to, notification, unread })),
     ]);
   }
 

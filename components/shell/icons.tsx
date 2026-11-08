@@ -262,3 +262,46 @@ export function SignOutIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function BellIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </Icon>
+  );
+}
+
+/** A phone with an arrow down into it: installing the app. */
+export function InstallIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="6" y="2" width="12" height="20" rx="2.5" />
+      <path d="M12 7v7" />
+      <path d="m9 11 3 3 3-3" />
+      <path d="M11 18.5h2" />
+    </Icon>
+  );
+}
+
+/** Safari's Share button: a box with an arrow up out of it. */
+export function ShareIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3v12" />
+      <path d="m8 7 4-4 4 4" />
+      <path d="M8 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2" />
+    </Icon>
+  );
+}
+
+/** iOS's "Add to Home Screen": a plus in a rounded square. */
+export function AddToHomeIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="4" />
+      <path d="M12 8v8" />
+      <path d="M8 12h8" />
+    </Icon>
+  );
+}

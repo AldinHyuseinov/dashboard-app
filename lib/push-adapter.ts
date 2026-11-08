@@ -18,6 +18,8 @@ export type PushNotification = {
 export type PushMessage = {
   to: PushTarget;
   notification: PushNotification;
+  /** The recipient's Unread count, for the badge on the app's icon. */
+  unread: number;
 };
 
 /**
@@ -60,9 +62,13 @@ export class InMemoryPushAdapter implements PushAdapter {
     this.gone.add(endpoint);
   }
 
-  async send({ to, notification }: PushMessage): Promise<void> {
+  async send({ to, notification, unread }: PushMessage): Promise<void> {
     if (this.gone.has(to.endpoint)) throw new PushDeviceGone(to.endpoint);
-    this.sent.push({ to: { endpoint: to.endpoint, keys: { ...to.keys } }, notification: { ...notification } });
+    this.sent.push({
+      to: { endpoint: to.endpoint, keys: { ...to.keys } },
+      notification: { ...notification },
+      unread,
+    });
   }
 }
 
@@ -98,10 +104,11 @@ const GONE_STATUSES = new Set([404, 410]);
 export class WebPushAdapter implements PushAdapter {
   constructor(private readonly vapid: VapidDetails | null = vapidFromEnv()) {}
 
-  async send({ to, notification }: PushMessage): Promise<void> {
+  async send({ to, notification, unread }: PushMessage): Promise<void> {
     if (!this.vapid) throw new Error("Push is not configured: set VAPID_SUBJECT, VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY");
     try {
-      await webpush.sendNotification(to, JSON.stringify(notification), {
+      // What public/sw.js reads: { title, body, url, unread }.
+      await webpush.sendNotification(to, JSON.stringify({ ...notification, unread }), {
         vapidDetails: this.vapid,
         TTL: PUSH_TTL_SECONDS,
       });
