@@ -68,6 +68,16 @@ export function BackIcon(props: IconProps) {
   );
 }
 
+/** The menu: a panel with its sidebar down the left. */
+export function SidebarIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <path d="M9.5 4v16" />
+    </Icon>
+  );
+}
+
 export function ChevronRightIcon(props: IconProps) {
   return (
     <Icon strokeWidth={2} {...props}>

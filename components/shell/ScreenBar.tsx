@@ -18,7 +18,8 @@ export default function ScreenBar() {
 
   return (
     <header className="on-bar safe-top sticky top-0 z-30 border-b border-bar-line bg-bar text-bar-ink lg:static lg:border-0 lg:bg-transparent lg:pt-2 lg:text-ink">
-      <div className="safe-x flex h-7 items-center justify-between gap-2 lg:px-6">
+      {/* With the sidebar hidden, its toggle sits at the top-left: keep clear of it. */}
+      <div className="safe-x flex h-7 items-center justify-between gap-2 lg:px-6 lg:group-data-[sidebar=hidden]/shell:pl-9">
         {back ? (
           <Link
             href={back.href}

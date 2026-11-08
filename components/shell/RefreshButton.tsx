@@ -19,7 +19,7 @@ export default function RefreshButton() {
       disabled={isRefreshing}
       aria-label={isRefreshing ? "Опресняване…" : "Опресни"}
       title="Опресни"
-      className="inline-flex size-touch shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-side-active disabled:cursor-progress lg:hover:bg-hover"
+      className="inline-flex size-touch shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-bar-hover disabled:cursor-progress lg:hover:bg-hover"
     >
       <RefreshIcon size={22} className={isRefreshing ? "animate-spin" : undefined} />
     </button>

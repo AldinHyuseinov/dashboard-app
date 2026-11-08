@@ -1,14 +1,18 @@
 import { activity } from "@/lib/activity";
+import { deviceSidebarHidden } from "@/lib/device-sidebar";
 import { getActor } from "@/lib/session";
 import BottomBar from "./BottomBar";
 import ScreenBar from "./ScreenBar";
+import ShellFrame from "./ShellFrame";
 import Sidebar from "./Sidebar";
 import { UnreadCountProvider } from "./UnreadCount";
 
 /**
  * The frame around every screen. Signed in: the sidebar on desktop, the top
  * and bottom bars on phones. Signed out (sign-in, not found), the screen
- * stands on its own. The Feed's navigation item shows the Unread count.
+ * stands on its own. The Feed's navigation item shows the Unread count. On
+ * desktop the sidebar can be hidden; the browser's choice is read here so the
+ * first render is already right.
  */
 export default async function AppShell({ children }: { children: React.ReactNode }) {
   const actor = await getActor();
@@ -23,14 +27,7 @@ export default async function AppShell({ children }: { children: React.ReactNode
 
   return (
     <UnreadCountProvider initialCount={await activity.unreadCount(actor)}>
-      <div className="min-h-dvh lg:flex">
-        <a
-          href="#main"
-          className="sr-only z-50 rounded-full bg-surface px-2 py-1 text-secondary font-semibold text-ink focus:not-sr-only focus:fixed focus:top-1 focus:left-1"
-        >
-          Към съдържанието
-        </a>
-
+      <ShellFrame initialHidden={await deviceSidebarHidden()}>
         <Sidebar userName={actor.name} />
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -49,7 +46,7 @@ export default async function AppShell({ children }: { children: React.ReactNode
         </div>
 
         <BottomBar />
-      </div>
+      </ShellFrame>
     </UnreadCountProvider>
   );
 }

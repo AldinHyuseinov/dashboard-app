@@ -7,13 +7,15 @@ import { navItem, screenAt } from "@/lib/navigation";
 import { initials } from "@/lib/utils";
 import { FeedIcon, PlusIcon } from "./icons";
 import Logo from "./Logo";
+import { useSidebarHidden } from "./ShellFrame";
 import UnreadBadge from "./UnreadBadge";
 import { useUnreadCount } from "./UnreadCount";
 
 /**
  * The desktop sidebar: the logo, New task, the Feed and every Category
  * (Venues' Categories under their heading, then the rest), and the Profile.
- * Hidden on phones, where the bottom bar takes over.
+ * Hidden on phones, where the bottom bar takes over. On desktop it can also
+ * be hidden with the toggle (see ShellFrame).
  */
 export default function Sidebar({ userName }: { userName: string }) {
   const pathname = usePathname();
@@ -24,49 +26,75 @@ export default function Sidebar({ userName }: { userName: string }) {
   const newTask = navItem("new-task");
   const profile = navItem("profile");
 
+  const hidden = useSidebarHidden();
+
   return (
-    <aside className="on-bar sticky top-0 hidden h-dvh w-32 shrink-0 flex-col gap-3 overflow-y-auto bg-bar py-3 pr-2 pl-[max(16px,env(safe-area-inset-left))] text-bar-ink lg:flex">
-      <Link href={feed.href} className="ml-1 self-start rounded-sm">
-        <Logo height={32} eager />
-      </Link>
-
-      <Link
-        href={newTask.href}
-        aria-current={screen.navItem === "new-task" ? "page" : undefined}
-        className="flex min-h-touch items-center justify-center gap-1 rounded-full bg-side-new text-secondary font-semibold tracking-[1px] text-on-side-new hover:brightness-110"
+    // The slot keeps the sidebar's width and narrows to nothing when hidden,
+    // so the screen takes the room; the sidebar slides out within it.
+    <div
+      className={`hidden shrink-0 overflow-clip transition-[width] duration-200 ease-out lg:block ${
+        hidden ? "lg:w-0" : "lg:w-32"
+      }`}
+    >
+      <aside
+        id="sidebar"
+        // Hidden is out of the tab order and away from screen readers.
+        inert={hidden}
+        className={`sticky top-0 flex h-dvh w-32 flex-col overflow-y-auto bg-side text-side-ink shadow-[inset_-1px_0_0_var(--color-side-line)] transition-transform duration-200 ease-out ${
+          hidden ? "-translate-x-full" : ""
+        }`}
       >
-        <PlusIcon size={18} />
-        {newTask.label}
-      </Link>
+        {/* The logo's lettering is white: it sits on the gold band, like the phone's top bar. */}
+        <div className="on-bar safe-top flex h-7 shrink-0 items-center bg-bar pl-8 text-bar-ink">
+          <Link href={feed.href} className="rounded-sm">
+            <Logo height={32} eager />
+          </Link>
+        </div>
 
-      <nav aria-label="Основна навигация" className="flex flex-col gap-2">
-        <SideLink href={feed.href} isCurrent={screen.navItem === "feed"}>
-          <FeedIcon size={20} />
-          <span className="flex-1">{feed.label}</span>
-          <UnreadBadge count={unreadCount} />
-        </SideLink>
+        <div className="flex flex-1 flex-col gap-3 py-3 pr-2 pl-[max(16px,env(safe-area-inset-left))]">
+          <Link
+            href={newTask.href}
+            aria-current={screen.navItem === "new-task" ? "page" : undefined}
+            className="flex min-h-touch items-center justify-center gap-1 rounded-full bg-side-new text-secondary font-semibold tracking-[1px] text-on-side-new hover:brightness-110"
+          >
+            <PlusIcon size={18} />
+            {newTask.label}
+          </Link>
 
-        {listCategorySections().map((section) => (
-          <CategorySection
-            key={section.heading}
-            heading={section.heading}
-            categories={section.categories}
-            pathname={pathname}
-          />
-        ))}
-      </nav>
+          <nav aria-label="Основна навигация" className="flex flex-col gap-2">
+            <SideLink href={feed.href} isCurrent={screen.navItem === "feed"}>
+              <FeedIcon size={20} />
+              <span className="flex-1">{feed.label}</span>
+              <UnreadBadge count={unreadCount} />
+            </SideLink>
 
-      <SideLink href={profile.href} isCurrent={screen.navItem === "profile"} className="mt-auto">
-        <span
-          aria-hidden="true"
-          className="-ml-0.5 flex size-3.5 shrink-0 items-center justify-center rounded-full bg-side-new text-[11px] font-bold text-on-side-new"
-        >
-          {initials(userName)}
-        </span>
-        <span className="min-w-0 truncate">{userName}</span>
-        <span className="sr-only">, {profile.label}</span>
-      </SideLink>
-    </aside>
+            {listCategorySections().map((section) => (
+              <CategorySection
+                key={section.heading}
+                heading={section.heading}
+                categories={section.categories}
+                pathname={pathname}
+              />
+            ))}
+          </nav>
+
+          <SideLink
+            href={profile.href}
+            isCurrent={screen.navItem === "profile"}
+            className="mt-auto"
+          >
+            <span
+              aria-hidden="true"
+              className="-ml-0.5 flex size-3.5 shrink-0 items-center justify-center rounded-full bg-side-new text-[11px] font-bold text-on-side-new"
+            >
+              {initials(userName)}
+            </span>
+            <span className="min-w-0 truncate">{userName}</span>
+            <span className="sr-only">, {profile.label}</span>
+          </SideLink>
+        </div>
+      </aside>
+    </div>
   );
 }
 
